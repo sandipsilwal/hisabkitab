@@ -1,0 +1,15 @@
+@import 'nepali-date-picker/dist/nepali-date-picker.min.css';
+
+/* Ensure Nepali Date Picker styles are applied correctly */
+.nepali-date-picker {
+    width: 100%;
+}
+.date-group {
+    position: relative;
+}
+.ndp-nepali-calendar {
+    z-index: 1050; /* Ensure it appears above Bootstrap modals */
+}
+.btn-group .btn {
+    margin-right: 5px;
+}
