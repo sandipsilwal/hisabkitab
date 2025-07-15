@@ -7,10 +7,9 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExtraIncomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('dashboard');
-});
 
+
+Route::get('/', [AccountController::class,'dashboard'])->name('dashboard');
 Route::resource('accounts', AccountController::class);
 Route::resource('transactions', TransactionController::class);
 Route::post('transactions/{transaction}/post', [TransactionController::class, 'post'])->name('transactions.post');
