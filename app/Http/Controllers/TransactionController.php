@@ -47,7 +47,7 @@ class TransactionController extends Controller
             'date_bs' => 'required',
             'transactions' => 'required|array',
             'transactions.*.to_account_id' => 'required|exists:accounts,id',
-            'transactions.*.amount' => 'required|integer|min:1',
+            // 'transactions.*.amount' => 'required|integer|min:1',
             'transactions.*.remarks' => 'nullable|string',
         ]);
         $date_ad = new DateTime(LaravelNepaliDate::from($request->date_bs)->toEnglishDate());
@@ -94,7 +94,7 @@ class TransactionController extends Controller
         $request->validate([
             'date_bs' => 'required',
             'to_account_id' => 'required|exists:accounts,id',
-            'amount' => 'required|integer|min:1',
+            // 'amount' => 'required|integer|min:1',
             'remarks' => 'nullable|string',
         ]);
 
