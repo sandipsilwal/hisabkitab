@@ -10,7 +10,8 @@ class AccountController extends Controller
     public function index()
     {
         $accounts = Account::all();
-        return view('accounts.index', ['accounts' => $accounts]);
+        $total_amount = Account::sum('balance');
+        return view('accounts.index', ['total_amount' => $total_amount, 'accounts' => $accounts]);
     }
 
     public function create()

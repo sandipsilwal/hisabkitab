@@ -8,30 +8,29 @@ use App\Models\Transaction;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Traits\DateFilterTrait;
 class TransactionController extends Controller
 {
+    use DateFilterTrait;
+
     public function index(Request $request)
     {
         $query = Transaction::query();
-        $filter_date_range = '';
         $filter_account_id = null;
-        if ($request->filled('date_range_filter')) {
-            $filter_date_range = $request->date_range_filter; // e.g., "2082-03-17 - 2082-03-25"
-            // Split the date range string into start and end dates
-            [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            // Convert BS dates to AD dates
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
-        }
+
+        // Apply date filters using the trait
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
+
+        // Handle account filter
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
             $query->where('to_account_id', $request->account_id);
         }
-        $transactions = $query->orderBy('date_ad','desc')->with('toAccount')->paginate(50);
+        $total_amount = $query->clone()->sum('amount');
+        $transactions = $query->orderBy('date_ad', 'desc')->with('toAccount')->paginate(50);
         $accounts = Account::all();
-        return view('transactions.index', compact('transactions', 'accounts','filter_date_range','filter_account_id'));
+
+        return view('transactions.index', compact('total_amount', 'transactions', 'accounts', 'filter_date_range', 'filter_account_id'));
     }
 
     public function create()

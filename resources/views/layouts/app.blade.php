@@ -23,6 +23,10 @@
             background: rgba(255, 0, 0, 0.4) !important;
             color: white !important;
         }
+        .total_bg{
+            background: rgba(91, 189, 61, 0.97) !important;
+            color: white !important;
+        }
 </style>
 </head>
 <body>

@@ -8,23 +8,18 @@ use App\Models\AccountTransaction;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\DateFilterTrait;
 
 class AccountTransactionController extends Controller
 {
+    use DateFilterTrait;
     public function index(Request $request)
     {
         $query = AccountTransaction::query();
-        $filter_date_range = '';
         $filter_account_id = null;
-        if ($request->filled('date_range_filter')) {
-            $filter_date_range = $request->date_range_filter; // e.g., "2082-03-17 - 2082-03-25"
-            // Split the date range string into start and end dates
-            [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            // Convert BS dates to AD dates
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
-        }
+        
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
+
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
             $query->where(function ($q) use ($request, $filter_account_id) {
@@ -32,9 +27,10 @@ class AccountTransactionController extends Controller
                   ->orWhere('to_account_id', $filter_account_id);
             });
         }
+        $total_amount = $query->clone()->sum('amount');
         $accountTransactions = $query->orderBy('date_ad','desc')->with(['fromAccount', 'toAccount'])->paginate(50);
         $accounts = Account::all();
-        return view('account_transactions.index', compact('accountTransactions', 'accounts','filter_date_range','filter_account_id'));
+        return view('account_transactions.index', compact('total_amount', 'accountTransactions', 'accounts','filter_date_range','filter_account_id'));
     }
 
     public function create()

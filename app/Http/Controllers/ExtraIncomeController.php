@@ -8,32 +8,28 @@ use App\Models\ExtraIncome;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\DateFilterTrait;
 
 class ExtraIncomeController extends Controller
 {
+    use DateFilterTrait;
     public function index(Request $request)
     {
         $query = ExtraIncome::query();
-        $filter_date_range = '';
         $filter_account_id = null;
-        if ($request->filled('date_range_filter')) {
-            $filter_date_range = $request->date_range_filter; // e.g., "2082-03-17 - 2082-03-25"
-            // Split the date range string into start and end dates
-            [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            // Convert BS dates to AD dates
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
-        }
+
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
+
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
             $query->where(function ($q) use ($request, $filter_account_id) {
                 $q->where('to_account_id', $filter_account_id);
             });
         }
+        $total_amount = $query->clone()->sum('amount');
         $extraIncomes = $query->orderBy('date_ad','desc')->with('toAccount')->get();
         $accounts = Account::all();
-        return view('extra_incomes.index', compact('extraIncomes', 'accounts', 'filter_date_range', 'filter_account_id'));
+        return view('extra_incomes.index', compact('total_amount', 'extraIncomes', 'accounts', 'filter_date_range', 'filter_account_id'));
     }
 
     public function create()

@@ -25,18 +25,27 @@
                 <div class="col-md-3 align-self-end">
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </div>
+                <div class="col-md-6 align-self-end">
+                    <button type="submit" name="date_filter" value="this_month" class="btn btn-secondary btn-sm">This Month</button>
+                    <button type="submit" name="date_filter" value="last_month" class="btn btn-secondary btn-sm">Last Month</button>
+                    <button type="submit" name="date_filter" value="this_week" class="btn btn-secondary btn-sm">This Week</button>
+                    <button type="submit" name="date_filter" value="last_week" class="btn btn-secondary btn-sm">Last Week</button>
+                </div>
+                <div class="col-md-6 align-self-end">
+                    <span class="btn btn-sm total_bg" style="float: right;"><b>Total Amount: {{ number_format($total_amount, 2) }}</b></span>
+                </div>
             </div>
         </form>
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Title</th>
-                    <th>To Account</th>
-                    <th>Amount</th>
-                    <th>Remarks</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th class="total_bg">Date</th>
+                    <th class="total_bg">Title</th>
+                    <th class="total_bg">To Account</th>
+                    <th class="total_bg">Amount</th>
+                    <th class="total_bg">Remarks</th>
+                    <th class="total_bg">Status</th>
+                    <th class="total_bg">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -65,6 +74,13 @@
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="font-weight-bold total_bg">Total</td>
+                    <td class="font-weight-bold total_bg">{{ number_format($total_amount, 2) }}</td>
+                    <td class="total_bg" colspan="3"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>

@@ -8,32 +8,28 @@ use App\Models\Expense;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\DateFilterTrait;
 
 class ExpenseController extends Controller
 {
+    use DateFilterTrait;
     public function index(Request $request)
     {
         $query = Expense::query();
-        $filter_date_range = '';
         $filter_account_id = null;
-        if ($request->filled('date_range_filter')) {
-            $filter_date_range = $request->date_range_filter; // e.g., "2082-03-17 - 2082-03-25"
-            // Split the date range string into start and end dates
-            [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            // Convert BS dates to AD dates
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
-        }
+        
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
+        
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
             $query->where(function ($q) use ($request, $filter_account_id) {
                 $q->where('from_account_id', $filter_account_id);
             });
         }
+        $total_amount = $query->clone()->sum('amount');
         $expenses = $query->orderBy('date_ad','desc')->with('fromAccount')->paginate(20);
         $accounts = Account::all();
-        return view('expenses.index', compact('expenses', 'accounts','filter_account_id','filter_date_range'));
+        return view('expenses.index', compact('total_amount', 'expenses', 'accounts','filter_account_id','filter_date_range'));
     }
 
     public function create()

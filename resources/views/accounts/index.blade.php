@@ -4,15 +4,22 @@
 <div class="row">
     <div class="col-12">
         <h1 class="mb-4">Accounts</h1>
-        <a href="{{ route('accounts.create') }}" class="btn btn-primary mb-3">Create New Account</a>
+        <div class="row">
+            <div class="col-md-6 align-self-end">
+                <a href="{{ route('accounts.create') }}" class="btn btn-primary mb-3">Create New Account</a>
+            </div>
+            <div class="col-md-6">
+                <span class="btn btn-sm total_bg" style="float: right;"><b>Total Amount: {{ number_format($total_amount, 2) }}</b></span>
+            </div>
+        </div>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Balance</th>
-                    <th>Default Cash</th>
-                    <th>Default Online</th>
-                    <th>Actions</th>
+                    <th class="total_bg">Name</th>
+                    <th class="total_bg">Balance</th>
+                    <th class="total_bg">Default Cash</th>
+                    <th class="total_bg">Default Online</th>
+                    <th class="total_bg">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,6 +40,13 @@
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <td class="font-weight-bold total_bg">Total</td>
+                    <td class="font-weight-bold total_bg">{{ number_format($total_amount, 2) }}</td>
+                    <td class="total_bg" colspan="3"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
