@@ -102,8 +102,6 @@ class AccountController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'is_default_cash_account' => 'boolean',
-            'is_default_online_account' => 'boolean',
             'balance' => 'required|integer',
         ]);
 
