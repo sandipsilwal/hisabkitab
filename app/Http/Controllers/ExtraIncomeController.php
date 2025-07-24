@@ -27,7 +27,7 @@ class ExtraIncomeController extends Controller
             });
         }
         $total_amount = $query->clone()->sum('amount');
-        $extraIncomes = $query->orderBy('date_ad','desc')->with('toAccount')->get();
+        $extraIncomes = $query->orderBy('date_ad','desc')->with('toAccount')->paginate(20);
         $accounts = Account::all();
         return view('extra_incomes.index', compact('total_amount', 'extraIncomes', 'accounts', 'filter_date_range', 'filter_account_id'));
     }

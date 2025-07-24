@@ -83,5 +83,8 @@
             </tfoot>
         </table>
     </div>
+    <div class="justify-content-center">
+        {{ $accountTransactions->links('pagination::bootstrap-5') }}
+    </div>
 </div>
 @endsection
