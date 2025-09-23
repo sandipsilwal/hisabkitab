@@ -4,6 +4,7 @@
 <div class="row">
     <div class="col-md-8">
         <h1 class="mb-4">Create Transaction</h1>
+        <h3 style="float: right;">Total Collectio: <span id="total">0</span></h3>
         <form action="{{ route('transactions.store') }}" method="POST">
             @csrf
             <div class="mb-3">
@@ -30,7 +31,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="transactions_0_amount" class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="transactions_0_amount" name="transactions[0][amount]" required>
+                            <input type="number" class="form-control transaction_amount" id="transactions_0_amount" name="transactions[0][amount]" required>
                         </div>
                         <div class="col-md-4">
                             <label for="transactions_0_remarks" class="form-label">Remarks</label>
@@ -60,7 +61,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="transactions_1_amount" class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="transactions_1_amount" name="transactions[1][amount]" required>
+                            <input type="number" class="form-control transaction_amount" id="transactions_1_amount" name="transactions[1][amount]" required>
                         </div>
                         <div class="col-md-4">
                             <label for="transactions_1_remarks" class="form-label">Remarks</label>
@@ -110,11 +111,24 @@
 
         // Append new item
         container.append(newItem);
+        calculateTotal();
     });
 
+    $(document).on("keyup change", ".transaction_amount", function() {
+        calculateTotal(); // 2 decimals
+    });
+    function calculateTotal(){
+        let total = 0;
+        $(".transaction_amount").each(function() {
+            let val = parseFloat($(this).val()) || 0;
+            total += val;
+        });
+        $("#total").text(total.toFixed(2));
+    }
     $(document).on('click', '.remove-repeater', function() {
-        if ($('#repeater-container .repeater-item').length > 2) {
+        if ($('#repeater-container .repeater-item').length > 1) {
             $(this).closest('.repeater-item').remove();
+            calculateTotal();
         }
     });
 </script>

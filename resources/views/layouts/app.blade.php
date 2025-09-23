@@ -27,6 +27,16 @@
             background: rgba(91, 189, 61, 0.97) !important;
             color: white !important;
         }
+        .day_bg{
+            background:rgba(132, 202, 138, 0.97) !important;
+            color:white;
+            font-weight:bold;
+        }
+        table tr td,th{
+            border: 1px solid white;
+            text-align:center;
+            vertical-align:middle;
+        }
 </style>
 </head>
 <body>

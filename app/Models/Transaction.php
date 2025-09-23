@@ -22,4 +22,8 @@ class Transaction extends Model
     {
         return $this->belongsTo(Account::class, 'to_account_id');
     }
+    public function day()
+    {
+        return $this->belongsTo(Day::class, 'day_id');
+    }
 }

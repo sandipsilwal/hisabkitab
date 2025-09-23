@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 
 
-Route::get('/', [AccountController::class,'dashboard'])->name('dashboard');
+Route::get('/', [TransactionController::class,'index']);
+Route::get('dashboard', [AccountController::class,'dashboard'])->name('dashboard');
 Route::resource('accounts', AccountController::class);
 Route::resource('transactions', TransactionController::class);
 Route::post('transactions/{transaction}/post', [TransactionController::class, 'post'])->name('transactions.post');

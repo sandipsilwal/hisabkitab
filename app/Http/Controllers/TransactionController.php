@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use App\Models\Account;
+use App\Models\Day;
 use App\Models\Transaction;
 use DateTime;
 use Illuminate\Http\Request;
@@ -15,22 +16,27 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Transaction::query();
+        $query = Transaction::query();//
+        $dayQuery = Day::query();
         $filter_account_id = null;
 
         // Apply date filters using the trait
-        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);//
+        [$dayQuery, $day_filter_date_range] = $this->applyDateFilters($dayQuery, $request);
 
         // Handle account filter
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
-            $query->where('to_account_id', $request->account_id);
+            $query->where('to_account_id', $request->account_id);//
+            $dayQuery->where('to_account_id', $request->account_id);
         }
-        $total_amount = $query->clone()->sum('amount');
-        $transactions = $query->orderBy('date_ad', 'desc')->with('toAccount')->paginate(50);
+        $total_amount = $query->clone()->sum('amount');//
+        $day_total_amount = $dayQuery->clone()->sum('total');
+        $days = $dayQuery->orderBy('date_ad', 'desc')->with('transactions')->paginate(50);
+        $transactions = $query->orderBy('date_ad', 'desc')->with('toAccount')->paginate(50);//
         $accounts = Account::all();
 
-        return view('transactions.index', compact('total_amount', 'transactions', 'accounts', 'filter_date_range', 'filter_account_id'));
+        return view('transactions.index', compact('days','day_total_amount','total_amount', 'transactions', 'accounts', 'filter_date_range', 'filter_account_id'));
     }
 
     public function create()
