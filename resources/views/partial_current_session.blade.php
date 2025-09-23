@@ -3,60 +3,47 @@
     <div class="col-md-6">
         <h6>Active Skaters</h6>
         <ul class="list-group mb-3">
-            @forelse ($activeSkaters as $skaterHistory)
-                <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $skaterHistory->id }}">
+            @forelse ($activeSkaters as $activeSkater)
+                <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $activeSkater->id }}">
                     <span>
-                        {{ $skaterHistory->skater->name }} ({{ $skaterHistory->no_of_skaters }} skaters, NPR {{ $skaterHistory->amount }}, {{ $skaterHistory->payment_method }}) - 
-                        <span class="timer" data-id="{{ $skaterHistory->id }}" data-seconds="{{ $skaterHistory->session_minutes * 60 }}">{{ $skaterHistory->session_minutes }}:00</span>
+                        {{ $activeSkater->skater->name }} ({{ $activeSkater->no_of_skaters }} skaters, NPR {{ $activeSkater->amount }}, {{ $activeSkater->payment_method }}) - 
+                        <span class="active-timer" id="active-timer-{{$activeSkater->id}}" data-id="{{ $activeSkater->id }}" data-seconds="{{ $activeSkater->session_minutes * 60 }}" data-session-minutes="{{ $activeSkater->session_minutes }}">{{ $activeSkater->session_minutes }}:00</span>
                     </span>
-                    <button class="btn btn-success btn-sm start-timer" data-id="{{ $skaterHistory->id }}">Start</button>
+                    <button class="btn btn-success btn-sm start-timer" id="start-button-{{ $activeSkater->id }}" data-id="{{ $activeSkater->id }}">Start</button>
                 </li>
             @empty
-                <li class="list-group-item">No active skaters</li>
             @endforelse
-        </ul>
-        <h6>Playing Skaters</h6>
-        <ul class="list-group">
-            @forelse ($playingSkaters as $skaterHistory)
-                @php
-                    $remainingSeconds = $skaterHistory->start_time
-                        ? max(0, ($skaterHistory->session_minutes * 60) - floor((now()->timestamp - strtotime($skaterHistory->start_time)) / 1000))
-                        : $skaterHistory->session_minutes * 60;
-                    $minutes = floor($remainingSeconds / 60);
-                    $seconds = $remainingSeconds % 60;
-                @endphp
-                @if ($remainingSeconds > 0)
-                    <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $skaterHistory->id }}">
+            @forelse ($playingSkaters as $playingSkater)
+                @if ($playingSkater->remaining_seconds > 0)
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $playingSkater->id }}">
                         <span>
-                            {{ $skaterHistory->skater->name }} ({{ $skaterHistory->no_of_skaters }} skaters, NPR {{ $skaterHistory->amount }}, {{ $skaterHistory->payment_method }}) - 
-                            <span class="timer" data-id="{{ $skaterHistory->id }}" data-seconds="{{ $remainingSeconds }}" data-start-time="{{ $skaterHistory->start_time }}">{{ $minutes }}:{{ str_pad($seconds, 2, '0', STR_PAD_LEFT) }}</span>
+                            {{ $playingSkater->skater->name }} ({{ $playingSkater->no_of_skaters }} skaters, NPR {{ $playingSkater->amount }}, {{ $playingSkater->payment_method }}) - 
+                            <span class="playing-timer" id="playing-timer-{{$playingSkater->id}}" data-id="{{ $playingSkater->id }}" data-seconds="{{ $playingSkater->remaining_seconds }}" data-start-time="{{ $playingSkater->start_time }}" data-session-minutes="{{ $playingSkater->session_minutes }}">{{ floor($playingSkater->remaining_seconds / 60) }}:{{ str_pad($playingSkater->remaining_seconds % 60, 2, '0', STR_PAD_LEFT) }}</span>
                         </span>
-                        <button class="btn btn-success btn-sm start-timer" data-id="{{ $skaterHistory->id }}" disabled>Running</button>
+                        <button class="btn btn-success btn-sm start-timer" data-id="{{ $playingSkater->id }}" disabled>Running</button>
                     </li>
                 @endif
             @empty
-                <li class="list-group-item">No playing skaters</li>
             @endforelse
         </ul>
+        <!-- <ul class="list-group">
+        </ul> -->
     </div>
 
     <!-- Right Half: Overtime Skaters -->
     <div class="col-md-6">
         <h6>Overtime Skaters</h6>
         <ul class="list-group">
-            @forelse ($overTimeSkaters as $skaterHistory)
-                @php
-                    $overtimeSeconds = floor((now()->timestamp - strtotime($skaterHistory->start_time)) / 1000) - ($skaterHistory->session_minutes * 60);
-                    $minutes = floor($overtimeSeconds / 60);
-                    $seconds = $overtimeSeconds % 60;
-                @endphp
-                <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $skaterHistory->id }}">
-                    <span>
-                        {{ $skaterHistory->skater->name }} ({{ $skaterHistory->no_of_skaters }} skaters, NPR {{ $skaterHistory->amount }}, {{ $skaterHistory->payment_method }}) - 
-                        <span class="overtime-timer" data-id="{{ $skaterHistory->id }}" data-start-time="{{ $skaterHistory->start_time }}" data-session-minutes="{{ $skaterHistory->session_minutes }}">{{ $minutes }}:{{ str_pad($seconds, 2, '0', STR_PAD_LEFT) }}</span>
-                    </span>
-                    <button class="btn btn-danger btn-sm stop-timer" data-id="{{ $skaterHistory->id }}">Stop</button>
-                </li>
+            @forelse ($overTimeSkaters as $overTimeSkater)
+                @if ($overTimeSkater->overtime_seconds > 0)
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="skater-{{ $overTimeSkater->id }}">
+                        <span>
+                            {{ $overTimeSkater->skater->name }} ({{ $overTimeSkater->no_of_skaters }} skaters, NPR {{ $overTimeSkater->amount }}, {{ $overTimeSkater->payment_method }}) - 
+                            <span class="overtime-timer" id="overtime-timer-{{$overTimeSkater->id}}" data-id="{{ $overTimeSkater->id }}" data-overtime_seconds="{{ $overTimeSkater->overtime_seconds }}" data-session-minutes="{{ $overTimeSkater->session_minutes }}">{{ floor($overTimeSkater->overtime_seconds / 60) }}:{{ str_pad($overTimeSkater->overtime_seconds % 60, 2, '0', STR_PAD_LEFT) }}</span>
+                        </span>
+                        <button class="btn btn-danger btn-sm stop-timer" id="stop-button-{{ $overTimeSkater->id }}" data-id="{{ $overTimeSkater->id }}">Stop</button>
+                    </li>
+                @endif
             @empty
                 <li class="list-group-item">No overtime skaters</li>
             @endforelse

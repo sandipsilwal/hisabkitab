@@ -27,6 +27,28 @@
             background: rgba(91, 189, 61, 0.97) !important;
             color: white !important;
         }
+        .default-times{
+            padding: 5px 10px;
+            border: 1px solid green;
+            font-size: 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .selected-time{
+            color: white;
+            background-color: red;
+        }
+        label{
+            font-weight: bold;
+        }
+        .list-group-item{
+            height: 60px;
+            border-radius: 10px;
+            border: 1px solid green;
+            padding: 5px;
+            margin-top: 15px;
+        }
 </style>
 </head>
 <body>

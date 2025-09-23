@@ -31,3 +31,4 @@ Route::post('/skaters', [SkaterHistoryController::class, 'store'])->name('skater
 Route::post('/skaters/{id}/start', [SkaterHistoryController::class, 'start'])->name('skaters.start');
 Route::post('/skaters/{id}/stop', [SkaterHistoryController::class, 'stop'])->name('skaters.stop');
 Route::post('/skaters/{id}/complete', [SkaterHistoryController::class, 'complete'])->name('skaters.complete');
+Route::post('/skaters/{id}/overTime', [SkaterHistoryController::class, 'overTime'])->name('skaters.overTime');

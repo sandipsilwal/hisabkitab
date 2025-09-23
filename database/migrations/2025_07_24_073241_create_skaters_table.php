@@ -28,7 +28,7 @@ return new class extends Migration
             $table->timestamp('start_time')->nullable();
             $table->timestamp('end_time')->nullable();
             $table->enum('payment_method', ['online', 'cash','unpaid'])->default('cash');
-            $table->enum('status', ['active','playing', 'completed'])->default('active');
+            $table->enum('status', ['active','playing','over_time','completed'])->default('active');
             $table->timestamps();
             $table->foreign('skater_id')->references('id')->on('skaters')->onDelete('cascade');
         });

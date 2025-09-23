@@ -12,17 +12,29 @@ class SkaterHistoryController extends Controller
 {
     public function index()
     {
-        return view('current_session', ['partialView' => $this->getPartialView()]);
+        try {
+            // Update playing skaters whose session has expired to over_time
+            SkaterHistory::where('status', 'playing')
+                ->whereNotNull('start_time')
+                ->whereRaw('DATE_ADD(start_time, INTERVAL session_minutes MINUTE) < NOW()')
+                ->update(['status' => 'over_time']);
+
+            return view('current_session', ['partialView' => $this->getPartialView()]);
+        } catch (\Exception $e) {
+            Log::error('Error in index method: ' . $e->getMessage());
+            return view('current_session', ['partialView' => $this->getPartialView()])
+                ->with('error', 'An error occurred while loading the session.');
+        }
     }
 
     public function getPartialView()
     {
         $activeSkaters = SkaterHistory::where('status', 'active')->with('skater')->get();
         $playingSkaters = SkaterHistory::where('status', 'playing')->with('skater')->get();
-        $overTimeSkaters = SkaterHistory::where('status', 'playing')
-            ->whereRaw("TIMESTAMPADD(MINUTE, session_minutes, start_time) < ?", [Carbon::now()])
-            ->with('skater')
-            ->get();
+        $overTimeSkaters = SkaterHistory::where('status', 'over_time')->with('skater')->get();
+
+
+        // dd($activeSkaters,$playingSkaters,$overTimeSkaters);
         $partialView = view('partial_current_session', compact('activeSkaters', 'playingSkaters', 'overTimeSkaters'))->render();
         return $partialView;
     }
@@ -51,7 +63,7 @@ class SkaterHistoryController extends Controller
                 'status' => 'active'
             ]);
 
-            return response()->json(['success' => true, 'partialView' => $this->getPartialView()]);
+            return redirect()->route('skaters.index');
         } catch (\Exception $e) {
             Log::error('Error adding skater: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to add skater'], 500);
@@ -77,7 +89,7 @@ class SkaterHistoryController extends Controller
     {
         try {
             $skaterHistory = SkaterHistory::findOrFail($id);
-            if ($skaterHistory->status === 'playing' && !$skaterHistory->end_time) {
+            if (!$skaterHistory->end_time) {
                 $skaterHistory->update(['end_time' => now(), 'status' => 'completed']);
                 return response()->json(['success' => true, 'partialView' => $this->getPartialView()]);
             }
@@ -85,6 +97,20 @@ class SkaterHistoryController extends Controller
         } catch (\Exception $e) {
             Log::error('Error stopping skater timer: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to stop timer'], 500);
+        }
+    }
+    public function overTime(Request $request, $id)
+    {
+        try {
+            $skaterHistory = SkaterHistory::findOrFail($id);
+            if (!$skaterHistory->end_time) {
+                $skaterHistory->update(['status' => 'over_time']);
+                return response()->json(['success' => true, 'partialView' => $this->getPartialView()]);
+            }
+            return response()->json(['success' => false, 'message' => 'Overtime issue'], 400);
+        } catch (\Exception $e) {
+            Log::error('Error stopping skater timer: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
