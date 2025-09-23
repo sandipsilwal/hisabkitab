@@ -57,6 +57,11 @@ class TransactionController extends Controller
             'transactions.*.remarks' => 'nullable|string',
         ]);
         $date_ad = new DateTime(LaravelNepaliDate::from($request->date_bs)->toEnglishDate());
+        $day = Day::create([
+            'date_bs' => $request->date_bs,
+            'total' => $request->total,
+            'date_ad' => $date_ad,
+        ]);
         DB::beginTransaction();
         try {
             foreach ($request->transactions as $transactionData) {
@@ -67,6 +72,7 @@ class TransactionController extends Controller
                     'amount' => $transactionData['amount'],
                     'remarks' => $transactionData['remarks'],
                     'is_posted' => false,
+                    'day_id' => $day->id,
                 ]);
 
                 $account = Account::find($transactionData['to_account_id']);
@@ -109,7 +115,9 @@ class TransactionController extends Controller
             $oldAmount = $transaction->amount;
             $oldAccountId = $transaction->to_account_id;
             $date_ad = new DateTime(LaravelNepaliDate::from($request->date_bs)->toEnglishDate());
-
+            $day = Day::find($transaction->day_id);
+            $day->total = $day->total - $oldAmount + $request->amount;
+            $day->update();
             $transaction->update(array_merge($request->only(['date_bs', 'to_account_id', 'amount', 'remarks']), [
                 'date_ad' => $date_ad
             ]));
@@ -152,19 +160,27 @@ class TransactionController extends Controller
         if ($transaction->is_posted) {
             return back()->with('error', 'Posted transactions cannot be deleted.');
         }
-
+        $day_id = $transaction->day_id;
+        $day=Day::find($day_id);
+        $amount = $transaction->amount;
         DB::beginTransaction();
         try {
             $account = Account::find($transaction->to_account_id);
-            $account->balance -= $transaction->amount;
+            $account->balance -= $amount;
             $account->save();
 
             $transaction->delete();
             DB::commit();
-            return redirect()->route('transactions.index')->with('success', 'Transaction deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to delete transaction.');
         }
+        if(!count($day->transactions)){
+            $day->delete();
+        }else{
+            $day->total= $day->total-$amount;
+            $day->update();
+        }
+        return redirect()->route('transactions.index')->with('success', 'Transaction deleted successfully.');
     }
 }

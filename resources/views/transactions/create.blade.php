@@ -4,9 +4,9 @@
 <div class="row">
     <div class="col-md-8">
         <h1 class="mb-4">Create Transaction</h1>
-        <h3 style="float: right;">Total Collectio: <span id="total">0</span></h3>
         <form action="{{ route('transactions.store') }}" method="POST">
             @csrf
+            <h3 style="float: right;">Total Collectio: <input type="text" readonly id="total" name="total" value="0"></h3>
             <div class="mb-3">
                 <label for="date_bs" class="form-label">Date</label>
                 <input type="text" class="form-control nepali-datepicker default-today-date" id="nepali_date" name="date_bs" required>
@@ -123,7 +123,7 @@
             let val = parseFloat($(this).val()) || 0;
             total += val;
         });
-        $("#total").text(total.toFixed(2));
+        $("#total").val(total.toFixed(2));
     }
     $(document).on('click', '.remove-repeater', function() {
         if ($('#repeater-container .repeater-item').length > 1) {

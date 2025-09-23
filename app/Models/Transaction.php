@@ -16,6 +16,7 @@ class Transaction extends Model
         'to_account_id',
         'remarks',
         'is_posted',
+        'day_id',
     ];
 
     public function toAccount()
