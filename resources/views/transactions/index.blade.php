@@ -82,7 +82,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2" class="font-weight-bold total_bg">Total</td>
+                    <td colspan="3" class="font-weight-bold total_bg">Total</td>
                     <td class="font-weight-bold total_bg">{{ number_format($day_total_amount, 2) }}</td>
                     <td class="total_bg" colspan="3"></td>
                 </tr>
