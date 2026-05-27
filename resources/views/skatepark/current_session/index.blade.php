@@ -798,29 +798,76 @@
     }
 
     // Helper: Speak out the overtime warning using Native Web Speech API
+    // Selects the best available human-sounding voice for natural sound
     function speakOvertime(tokenName) {
-        if ('speechSynthesis' in window) {
-            // Reset the speech queue in case it became locked or stuck
-            window.speechSynthesis.cancel();
+        if (!('speechSynthesis' in window)) {
+            console.log("Browser SpeechSynthesis is not supported.");
+            return;
+        }
 
-            const text = "token no " + tokenName + ", your time is over. . . . i am repeating token no " + tokenName + ", your time is over";
-            const message = new SpeechSynthesisUtterance(text);
-            message.rate = 1.0;
-            message.pitch = 1.0;
-            window.speechSynthesis.speak(message);
+        window.speechSynthesis.cancel();
+
+        const text = "Token " + tokenName + " — your time is over. I repeat — Token " + tokenName + " — your time is over.";
+
+        function doSpeak() {
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // Pick the best available human-sounding voice
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = null;
+
+            // Priority list — most natural-sounding voices first
+            const preferred = [
+                'Google UK English Female',
+                'Google UK English Male',
+                'Google US English',
+                'Microsoft Zira - English (United States)',
+                'Microsoft David - English (United States)',
+                'Microsoft Mark - English (United States)',
+                'Microsoft Aria Online (Natural) - English (United States)',
+                'Microsoft Jenny Online (Natural) - English (United States)',
+                'Samantha',   // macOS/iOS
+                'Karen',      // macOS
+                'Daniel',     // macOS UK
+                'Moira',      // macOS Ireland
+                'Alex',       // macOS
+            ];
+
+            for (const name of preferred) {
+                const found = voices.find(v => v.name === name);
+                if (found) { selectedVoice = found; break; }
+            }
+
+            // Fallback: first English voice that isn't "eSpeak" or "festival"
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v =>
+                    v.lang.startsWith('en') &&
+                    !v.name.toLowerCase().includes('espeak') &&
+                    !v.name.toLowerCase().includes('festival')
+                ) || null;
+            }
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            // Tune prosody for natural, clear delivery
+            utterance.rate  = 0.88;   // slightly slower — clear and deliberate
+            utterance.pitch = 1.05;   // very slightly raised — warm, natural
+            utterance.volume = 1.0;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Voices may not be loaded yet on first call — wait if needed
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            doSpeak();
         } else {
-            console.log("Browser SpeechSynthesis is not supported. Sound fallback.");
-            // Web Audio API beep fallback
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // A4 note
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.5);
+            window.speechSynthesis.addEventListener('voiceschanged', function handler() {
+                window.speechSynthesis.removeEventListener('voiceschanged', handler);
+                doSpeak();
+            });
         }
     }
 
