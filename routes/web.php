@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
         Route::post('api/play-records/{playRecord}/update', [CurrentSessionController::class, 'updatePlayRecord'])->name('skatepark.api.update-play-record');
         Route::post('api/play-records/{playRecord}/delete', [CurrentSessionController::class, 'deletePlayRecord'])->name('skatepark.api.delete-play-record');
         Route::get('api/rates/lookup', [CurrentSessionController::class, 'lookupRate'])->name('skatepark.api.lookup-rate');
+        Route::get('api/tts', [CurrentSessionController::class, 'tts'])->name('skatepark.api.tts');
 
         // Reports
         Route::get('reports', [CurrentSessionController::class, 'report'])->name('skatepark.reports');

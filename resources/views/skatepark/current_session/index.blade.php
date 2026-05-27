@@ -678,6 +678,7 @@
     let serverTimeOffset = 0; // Milliseconds offset between server time and local client time
     let timerInterval = null;
     const spokenRecords = new Set(); // To prevent repeating Speech Synthesis announcements
+    const prefetchedAudio = new Map(); // Pre-buffered audio keyed by tokenName
 
     // Add Play Modal Stepper States
     let addStep = 1;
@@ -797,48 +798,127 @@
         modal.modal('show');
     }
 
-    // Helper: Speak out the overtime warning using Native Web Speech API
-    // Selects the best available human-sounding voice for natural sound
-    function speakOvertime(tokenName) {
-        if (!('speechSynthesis' in window)) {
-            console.log("Browser SpeechSynthesis is not supported.");
-            return;
+    // Helper: Speak overtime warning
+    // Tier 1: Native Nepali voice (Edge with Hemanta/Swaroop)
+    // Tier 2: Google Translate TTS audio fetch (Chrome — real human Nepali sound)
+    // Tier 3: Best English Web Speech voice (universal fallback)
+
+    // Build the spoken label for a record:
+    //   • Pure number token  → "टोकन नम्बर 3"  (prefix added)
+    //   • Non-numeric token  → "SB-01" or "Sandip" (just the value, no prefix)
+    //   • No token, has name → player name (no prefix)
+    function buildTtsLabel(record) {
+        // Resolve player name if present (either custom name or package player name)
+        let displayName = '';
+        if (record.name) {
+            displayName = record.name;
+        } else if (record.player_package && record.player_package.player) {
+            displayName = record.player_package.player.name;
         }
 
-        window.speechSynthesis.cancel();
+        if (displayName) {
+            // When reading player name, do NOT say "टोकन नम्बर" / "Token" before the name
+            return { label: displayName, prefix: false };
+        }
 
-        const text = "Token " + tokenName + " — your time is over. I repeat — Token " + tokenName + " — your time is over.";
+        // Fallback to token if name is null
+        const tokenName = (record.token && record.token.name) ? record.token.name : null;
+        if (!tokenName) return null;
 
-        function doSpeak() {
-            const utterance = new SpeechSynthesisUtterance(text);
+        // If the token is purely numeric, add the Nepali/English prefix
+        if (/^\d+$/.test(String(tokenName).trim())) {
+            return { label: tokenName, prefix: true };
+        }
+        return { label: tokenName, prefix: false };
+    }
 
-            // Pick the best available human-sounding voice
+    function speakOvertimeForRecord(id) {
+        const record = activeRecords.find(r => r.id === id);
+        if (record) {
+            const ttsInfo = buildTtsLabel(record);
+            if (ttsInfo) speakOvertime(ttsInfo);
+        }
+    }
+
+    function speakOvertime(ttsInfo) {
+        // ttsInfo can be { label, prefix } from buildTtsLabel, or a plain string (legacy)
+        if (typeof ttsInfo === 'string') {
+            ttsInfo = /^\d+$/.test(ttsInfo.trim())
+                ? { label: ttsInfo, prefix: true }
+                : { label: ttsInfo, prefix: false };
+        }
+        if (!ttsInfo) return;
+
+        const tokenName = ttsInfo.label;
+        const spoken   = ttsInfo.prefix ? "टोकन नम्बर " + ttsInfo.label : ttsInfo.label;
+        const nepaliPhrase1 = spoken + ", तपाईंको समय सकियो।";
+        const nepaliPhrase2 = "फेरि सुन्नुहोस्, " + spoken + ", तपाईंको समय सकियो।";
+        const nepaliText    = nepaliPhrase1 + " " + nepaliPhrase2;
+        const cacheKey      = ttsInfo.label;
+
+        // ── Tier 2: Server-side TTS proxy (avoids CORS in Chrome) ────────────
+        // Plays from pre-fetched cache if available, otherwise fetches now
+        function speakViaGoogleTranslate() {
+            const cached = prefetchedAudio.get(cacheKey);
+            if (cached && cached.audio1 && cached.audio2) {
+                // Instant play from pre-buffered audio — no network wait
+                cached.audio1.currentTime = 0;
+                cached.audio1.play().then(() => {
+                    cached.audio1.addEventListener('ended', function onEnd() {
+                        cached.audio1.removeEventListener('ended', onEnd);
+                        setTimeout(() => cached.audio2.play().catch(e => console.warn('TTS part 2 failed:', e)), 400);
+                    });
+                }).catch(err => {
+                    console.warn("Pre-fetched TTS play failed, falling back to English:", err);
+                    speakEnglishFallback();
+                });
+                return;
+            }
+
+            // Not pre-fetched — fetch now (slight delay expected)
+            const proxyBase = "{{ route('skatepark.api.tts') }}";
+            const url1 = proxyBase + "?lang=ne&text=" + encodeURIComponent(nepaliPhrase1);
+            const url2 = proxyBase + "?lang=ne&text=" + encodeURIComponent(nepaliPhrase2);
+
+            const audio1 = new Audio(url1);
+            const audio2 = new Audio(url2);
+            audio1.volume = 1.0;
+            audio2.volume = 1.0;
+
+            audio1.play().then(() => {
+                audio1.addEventListener('ended', () => {
+                    setTimeout(() => audio2.play().catch(e => console.warn('TTS part 2 failed:', e)), 400);
+                });
+            }).catch(err => {
+                console.warn("Nepali TTS proxy failed, falling back to English speech:", err);
+                speakEnglishFallback();
+            });
+        }
+
+        // ── Tier 3: Best English Web Speech voice (universal fallback) ────────
+        function speakEnglishFallback() {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            const englishSpoken = ttsInfo.prefix ? "Token " + tokenName : tokenName;
+            const englishText = englishSpoken + " — your time is over. I repeat — " + englishSpoken + " — your time is over.";
+            const utterance = new SpeechSynthesisUtterance(englishText);
+
             const voices = window.speechSynthesis.getVoices();
-            let selectedVoice = null;
-
-            // Priority list — most natural-sounding voices first
-            const preferred = [
-                'Google UK English Female',
-                'Google UK English Male',
-                'Google US English',
-                'Microsoft Zira - English (United States)',
-                'Microsoft David - English (United States)',
-                'Microsoft Mark - English (United States)',
+            const preferredEnglish = [
+                'Google UK English Female', 'Google UK English Male', 'Google US English',
                 'Microsoft Aria Online (Natural) - English (United States)',
                 'Microsoft Jenny Online (Natural) - English (United States)',
-                'Samantha',   // macOS/iOS
-                'Karen',      // macOS
-                'Daniel',     // macOS UK
-                'Moira',      // macOS Ireland
-                'Alex',       // macOS
+                'Microsoft Zira - English (United States)',
+                'Microsoft David - English (United States)',
+                'Samantha', 'Karen', 'Daniel', 'Alex',
             ];
 
-            for (const name of preferred) {
+            let selectedVoice = null;
+            for (const name of preferredEnglish) {
                 const found = voices.find(v => v.name === name);
                 if (found) { selectedVoice = found; break; }
             }
-
-            // Fallback: first English voice that isn't "eSpeak" or "festival"
             if (!selectedVoice) {
                 selectedVoice = voices.find(v =>
                     v.lang.startsWith('en') &&
@@ -847,27 +927,72 @@
                 ) || null;
             }
 
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-
-            // Tune prosody for natural, clear delivery
-            utterance.rate  = 0.88;   // slightly slower — clear and deliberate
-            utterance.pitch = 1.05;   // very slightly raised — warm, natural
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.rate   = 0.88;
+            utterance.pitch  = 1.05;
             utterance.volume = 1.0;
-
             window.speechSynthesis.speak(utterance);
         }
 
-        // Voices may not be loaded yet on first call — wait if needed
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            doSpeak();
+        // ── Tier 1: Try native Nepali Web Speech voice (Edge) ────────────────
+        function tryNativeNepali() {
+            if (!('speechSynthesis' in window)) {
+                speakViaGoogleTranslate();
+                return;
+            }
+
+            const voices = window.speechSynthesis.getVoices();
+            const nepaliVoiceNames = [
+                'Microsoft Hemanta Online (Natural) - Nepali (Nepal)',
+                'Microsoft Swaroop Online (Natural) - Nepali (Nepal)',
+                'Microsoft Hemanta - Nepali (Nepal)',
+                'Microsoft Swaroop - Nepali (Nepal)',
+            ];
+
+            let nepaliVoice = null;
+            for (const name of nepaliVoiceNames) {
+                const found = voices.find(v => v.name === name);
+                if (found) { nepaliVoice = found; break; }
+            }
+            if (!nepaliVoice) {
+                nepaliVoice = voices.find(v => v.lang === 'ne-NP' || v.lang === 'ne') || null;
+            }
+
+            if (nepaliVoice) {
+                // Edge: use native Nepali neural voice
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(nepaliText);
+                utterance.voice  = nepaliVoice;
+                utterance.lang   = 'ne-NP';
+                utterance.rate   = 0.85;
+                utterance.pitch  = 1.05;
+                utterance.volume = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                // Chrome: no native Nepali voice — use Google Translate audio
+                speakViaGoogleTranslate();
+            }
+        }
+
+        // Wait for voices to load if needed, then run
+        if ('speechSynthesis' in window) {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                tryNativeNepali();
+            } else {
+                window.speechSynthesis.addEventListener('voiceschanged', function handler() {
+                    window.speechSynthesis.removeEventListener('voiceschanged', handler);
+                    tryNativeNepali();
+                });
+                // If voices never load (e.g. unsupported), go straight to Google TTS
+                setTimeout(() => {
+                    if (window.speechSynthesis.getVoices().length === 0) {
+                        speakViaGoogleTranslate();
+                    }
+                }, 1500);
+            }
         } else {
-            window.speechSynthesis.addEventListener('voiceschanged', function handler() {
-                window.speechSynthesis.removeEventListener('voiceschanged', handler);
-                doSpeak();
-            });
+            speakViaGoogleTranslate();
         }
     }
 
@@ -1024,7 +1149,7 @@
             // Big Stop button covering both rows, plus Speaker button if overtime
             bigActionBtnHtml = `
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-light border-0 rounded-circle speaker-btn ${isOvertime ? '' : 'd-none'}" onclick="speakOvertime('${tokenName}')" title="Replay Alert" style="width: 28px; height: 28px; padding: 0; line-height: 28px; font-size: 0.9rem; vertical-align: middle;">🔊</button>
+                    <button type="button" class="btn btn-sm btn-light border-0 rounded-circle speaker-btn ${isOvertime ? '' : 'd-none'}" onclick="speakOvertimeForRecord(${record.id})" title="Replay Alert" style="width: 28px; height: 28px; padding: 0; line-height: 28px; font-size: 0.9rem; vertical-align: middle;">🔊</button>
                     <button class="btn btn-danger fw-bold d-flex align-items-center justify-content-center" onclick="stopTimer(${record.id})" style="font-size: 0.85rem; border-radius: 6px; height: 36px; width: 58px; padding: 0;">${translations.stopText}</button>
                 </div>
             `;
@@ -1159,6 +1284,24 @@
                 
                 // Ensure speaker button is hidden
                 cardEl.find('.speaker-btn').addClass('d-none');
+
+                // Pre-fetch audio 30 seconds before expiry so it's ready instantly
+                if (remainingSeconds <= 30) {
+                    const ttsInfo = buildTtsLabel(record);
+                    if (ttsInfo && !prefetchedAudio.has(ttsInfo.label)) {
+                        prefetchedAudio.set(ttsInfo.label, { audio1: null, audio2: null });
+                        const proxyBase = "{{ route('skatepark.api.tts') }}";
+                        const spoken = ttsInfo.prefix ? "टोकन नम्बर " + ttsInfo.label : ttsInfo.label;
+                        const p1 = spoken + ", तपाईंको समय सकियो।";
+                        const p2 = "फेरि सुन्नुहोस्, " + spoken + ", तपाईंको समय सकियो।";
+                        const a1 = new Audio(proxyBase + "?lang=ne&text=" + encodeURIComponent(p1));
+                        const a2 = new Audio(proxyBase + "?lang=ne&text=" + encodeURIComponent(p2));
+                        a1.preload = 'auto'; a2.preload = 'auto';
+                        a1.volume  = 1.0;   a2.volume  = 1.0;
+                        a1.load(); a2.load();
+                        prefetchedAudio.set(ttsInfo.label, { audio1: a1, audio2: a2 });
+                    }
+                }
             } else {
                 // Overtime has occurred!
                 const overtimeSeconds = Math.abs(remainingSeconds);
@@ -1171,7 +1314,8 @@
                 // Trigger Text-to-Speech Warning ONCE
                 if (!spokenRecords.has(record.id)) {
                     spokenRecords.add(record.id);
-                    speakOvertime(record.token.name);
+                    const ttsInfo = buildTtsLabel(record);
+                    if (ttsInfo) speakOvertime(ttsInfo);
                     
                     // Dynamically move card container from playing column to overtime column
                     setTimeout(function() {

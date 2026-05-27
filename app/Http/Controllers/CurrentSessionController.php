@@ -11,6 +11,7 @@ use App\Models\Rate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class CurrentSessionController extends Controller
 {
@@ -357,6 +358,46 @@ class CurrentSessionController extends Controller
             'normalRevenue',
             'paymentBreakdown'
         ));
+    }
+
+    /**
+     * Server-side proxy for Google Translate TTS.
+     * Fetches Nepali (or any language) audio on the server to bypass browser CORS restrictions.
+     */
+    public function tts(Request $request)
+    {
+        $text = $request->query('text', '');
+        $lang = $request->query('lang', 'ne');
+
+        if (empty(trim($text))) {
+            abort(400, 'Text parameter is required.');
+        }
+
+        // Build Google Translate TTS URL (server-side call avoids CORS)
+        $ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8"
+                . "&q=" . urlencode($text)
+                . "&tl=" . urlencode($lang)
+                . "&client=tw-ob"
+                . "&ttsspeed=0.8";
+
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Referer'    => 'https://translate.google.com/',
+                'Accept'     => 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5',
+            ])->timeout(10)->get($ttsUrl);
+
+            if ($response->failed()) {
+                abort(502, 'TTS service unavailable.');
+            }
+
+            return response($response->body(), 200)
+                ->header('Content-Type', 'audio/mpeg')
+                ->header('Cache-Control', 'public, max-age=3600')
+                ->header('Access-Control-Allow-Origin', '*');
+        } catch (\Exception $e) {
+            abort(503, 'TTS fetch failed: ' . $e->getMessage());
+        }
     }
 }
 
