@@ -89,7 +89,11 @@ class AccountController extends Controller
             'balance' => 'required|integer',
         ]);
 
-        Account::create($request->all());
+        $data = $request->all();
+        $data['is_default_cash_account'] = $request->has('is_default_cash_account');
+        $data['is_default_online_account'] = $request->has('is_default_online_account');
+
+        Account::create($data);
         return redirect()->route('accounts.index')->with('success', 'Account created successfully.');
     }
 
@@ -105,7 +109,11 @@ class AccountController extends Controller
             'balance' => 'required|integer',
         ]);
 
-        $account->update($request->all());
+        $data = $request->all();
+        $data['is_default_cash_account'] = $request->has('is_default_cash_account');
+        $data['is_default_online_account'] = $request->has('is_default_online_account');
+
+        $account->update($data);
         return redirect()->route('accounts.index')->with('success', 'Account updated successfully.');
     }
 

@@ -16,6 +16,27 @@ class Account extends Model
         'balance',
     ];
 
+    protected static function booted()
+    {
+        static::saving(function ($account) {
+            if ($account->is_default_cash_account) {
+                if ($account->exists) {
+                    static::where('id', '!=', $account->id)->update(['is_default_cash_account' => false]);
+                } else {
+                    static::query()->update(['is_default_cash_account' => false]);
+                }
+            }
+
+            if ($account->is_default_online_account) {
+                if ($account->exists) {
+                    static::where('id', '!=', $account->id)->update(['is_default_online_account' => false]);
+                } else {
+                    static::query()->update(['is_default_online_account' => false]);
+                }
+            }
+        });
+    }
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'to_account_id');
