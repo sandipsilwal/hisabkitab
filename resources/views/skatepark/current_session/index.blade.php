@@ -289,14 +289,11 @@
                     <h5 class="fw-bold mb-3 text-dark">{{ __('Select Token') }}</h5>
                     <div class="row g-3" id="add-tokens-container">
                         @forelse($tokens as $index => $t)
-                            <div class="col-md-2 col-4 token-selector-col mb-2" data-token-id="{{ $t->id }}">
+                            <div class="{{ $index < 2 ? 'col-md-6 col-6' : 'col-md-2 col-4' }} token-selector-col mb-2" data-token-id="{{ $t->id }}">
                                 <button type="button" class="btn btn-outline-primary w-100 py-1 px-0.5 fw-bold" onclick="selectToken({{ $t->id }}, '{{ $t->name }}', {{ $t->game_type_id }}, '{{ $t->gameType->game_name }}')" style="border-radius: 8px; font-size: 1.15rem; min-height: 36px; display: flex; align-items: center; justify-content: center; padding-top: 0.15rem; padding-bottom: 0.15rem;">
                                     {{ $t->name }}
                                 </button>
                             </div>
-                            @if ($index == 1)
-                                <div class="w-100"></div>
-                            @endif
                         @empty
                             <div class="text-center py-4 text-muted col-12">{{ __('No active tokens available. Make sure tokens are registered in masters.') }}</div>
                         @endforelse
@@ -1682,13 +1679,13 @@
         const filteredTokens = masterTokens.filter(t => t.game_type_id === gameTypeId && t.is_active && !usedTokenIds.has(t.id));
 
         filteredTokens.forEach((t, index) => {
+            const colClass = index < 2 ? 'col-md-6 col-6' : 'col-md-2 col-4';
             tokensContainer.append(`
-                <div class="col-md-2 col-4 mb-2">
+                <div class="${colClass} mb-2">
                     <button type="button" class="btn btn-outline-success w-100 py-1 px-0.5 fw-bold" onclick="selectPkgToken(${t.id}, '${t.name}')" style="border-radius: 8px; font-size: 1.15rem; min-height: 36px; display: flex; align-items: center; justify-content: center; padding-top: 0.15rem; padding-bottom: 0.15rem;">
                         ${t.name}
                     </button>
                 </div>
-                ${index === 1 ? '<div class="w-100"></div>' : ''}
             `);
         });
 
