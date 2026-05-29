@@ -12,9 +12,9 @@ class AuthController extends Controller
      */
     public function showLoginForm()
     {
-        // If the user is already logged in, redirect them to the dashboard
+        // If the user is already logged in, redirect them to the current session page
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('skatepark.current-session');
         }
 
         return view('auth.login');
@@ -35,7 +35,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'))
+            return redirect()->intended(route('skatepark.current-session'))
                 ->with('success', 'Logged in successfully.');
         }
 

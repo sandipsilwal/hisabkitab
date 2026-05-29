@@ -9,6 +9,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- <link href="https://unpkg.com/nepali-date-picker@2.0.2/dist/nepaliDatePicker.min.css" rel="stylesheet" crossorigin="anonymous"> -->
     <link href="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/css/nepali.datepicker.v5.0.4.min.css" rel="stylesheet" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Override native window.alert to display a beautiful SweetAlert2 modal instead
+        window.alert = function(message) {
+            const isDarkMode = document.body.classList.contains('dark-mode') || localStorage.getItem('theme') === 'dark';
+            Swal.fire({
+                text: message,
+                background: isDarkMode ? '#1e293b' : '#ffffff',
+                color: isDarkMode ? '#f8fafc' : '#0f172a',
+                confirmButtonColor: '#38bdf8',
+                confirmButtonText: 'OK'
+            });
+        };
+    </script>
     <style>
         body {
             background-color: #f8f9fa;
@@ -593,7 +607,7 @@
     <script>
         // Immediately apply dark mode class if stored in localStorage to prevent page flash
         (function() {
-            const currentTheme = localStorage.getItem('theme') || 'light';
+            const currentTheme = localStorage.getItem('theme') || 'dark';
             if (currentTheme === 'dark') {
                 document.body.classList.add('dark-mode');
             }
@@ -793,7 +807,7 @@
                 }
             }
 
-            const initialTheme = localStorage.getItem('theme') || 'light';
+            const initialTheme = localStorage.getItem('theme') || 'dark';
             updateThemeUI(initialTheme);
 
             if (themeBtn) {
@@ -814,28 +828,6 @@
     </script>
 
     <div class="main-content">
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
         @yield('content')
     </div>
 
@@ -844,6 +836,61 @@
     <script src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.4.min.js" type="text/javascript"></script>
     <script>
         $(document).ready(function() {
+            // SweetAlert flash messages and error alerts
+            const isDarkMode = document.body.classList.contains('dark-mode') || localStorage.getItem('theme') === 'dark';
+            
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: isDarkMode ? '#1e293b' : '#ffffff',
+                color: isDarkMode ? '#f8fafc' : '#0f172a',
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            @if (session('success'))
+                Toast.fire({
+                    icon: 'success',
+                    title: {!! json_encode(session('success')) !!}
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: {!! json_encode(session('error')) !!},
+                    background: isDarkMode ? '#1e293b' : '#ffffff',
+                    color: isDarkMode ? '#f8fafc' : '#0f172a',
+                    confirmButtonColor: '#38bdf8',
+                    confirmButtonText: 'OK'
+                });
+            @endif
+
+            @if ($errors->any())
+                @php
+                    $errorHtml = '<ul class="text-start mb-0" style="list-style-type: disc; padding-left: 15px;">';
+                    foreach ($errors->all() as $error) {
+                        $errorHtml .= '<li>' . e($error) . '</li>';
+                    }
+                    $errorHtml .= '</ul>';
+                @endphp
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Errors',
+                    html: '{!! $errorHtml !!}',
+                    background: isDarkMode ? '#1e293b' : '#ffffff',
+                    color: isDarkMode ? '#f8fafc' : '#0f172a',
+                    confirmButtonColor: '#38bdf8',
+                    confirmButtonText: 'OK'
+                });
+            @endif
+
             function initializeDatePickers() {
                 try {
                     $('.nepali-datepicker').each(function() {

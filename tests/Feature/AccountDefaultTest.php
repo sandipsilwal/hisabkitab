@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -119,8 +120,10 @@ class AccountDefaultTest extends TestCase
     /** @test */
     public function controller_store_and_update_methods_correctly_handle_checkboxes(): void
     {
+        $user = User::factory()->create();
+
         // 1. Test Store with checkboxes checked
-        $response = $this->post(route('accounts.store'), [
+        $response = $this->actingAs($user)->post(route('accounts.store'), [
             'name' => 'Test Checkbox Account',
             'balance' => 500,
             'is_default_cash_account' => '1',
@@ -134,7 +137,7 @@ class AccountDefaultTest extends TestCase
         $this->assertTrue((bool) $account->is_default_online_account);
 
         // 2. Test Update with checkboxes unchecked (missing from request)
-        $response = $this->put(route('accounts.update', $account), [
+        $response = $this->actingAs($user)->put(route('accounts.update', $account), [
             'name' => 'Test Checkbox Account Updated',
             'balance' => 600,
             // keys are completely omitted to simulate unchecked state

@@ -42,7 +42,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('skatepark.current-session'));
     }
 
     /** @test */
