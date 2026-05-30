@@ -35,7 +35,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('skatepark.current-session'))
+            return redirect()->route('skatepark.current-session')
                 ->with('success', 'Logged in successfully.');
         }
 
