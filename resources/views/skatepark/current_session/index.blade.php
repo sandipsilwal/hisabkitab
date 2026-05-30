@@ -353,6 +353,9 @@
 
                 <!-- STEP 4: SUMMARY & AMOUNT (SAVE) -->
                 <div id="add-step-4" class="d-none">
+                    <!-- Save & Launch Button at top of save step -->
+                    <button type="button" class="btn w-100 fw-bold mb-4 d-none" id="btn-add-submit" onclick="submitPlayRecord()" style="border-radius: 12px; background-color: #15803d !important; border-color: #15803d !important; color: #ffffff !important; font-size: 1.35rem; padding: 0.9rem 1rem; letter-spacing: 0.5px; box-shadow: 0 4px 18px rgba(21,128,61,0.25); transition: all 0.2s ease;">🚀 {{ __('Save & Launch') }}</button>
+
                     <h6 class="fw-bold mb-2 text-dark">{{ __('Session Summary') }}</h6>
                     <div class="row mb-2 px-2 py-2 bg-light rounded align-items-center" style="border-radius: 8px;">
                         <div class="col-6 col-md-3 mb-2">
@@ -393,7 +396,6 @@
             
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary fw-semibold px-4" style="border-radius: 8px;" id="btn-add-back" onclick="navigateAddBack()" disabled>{{ __('Back') }}</button>
-                <button type="button" class="btn fw-semibold px-4 d-none" style="border-radius: 8px; background-color: #15803d !important; border-color: #15803d !important; color: #ffffff !important;" id="btn-add-submit" onclick="submitPlayRecord()">{{ __('Save & Launch') }}</button>
             </div>
         </div>
     </div>
