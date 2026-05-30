@@ -353,36 +353,43 @@
 
                 <!-- STEP 4: SUMMARY & AMOUNT (SAVE) -->
                 <div id="add-step-4" class="d-none">
-                    <!-- Save & Launch Button at top of save step -->
-                    <button type="button" class="btn w-100 fw-bold mb-4 d-none" id="btn-add-submit" onclick="submitPlayRecord()" style="border-radius: 12px; background-color: #15803d !important; border-color: #15803d !important; color: #ffffff !important; font-size: 1.35rem; padding: 0.9rem 1rem; letter-spacing: 0.5px; box-shadow: 0 4px 18px rgba(21,128,61,0.25); transition: all 0.2s ease;">🚀 {{ __('Save & Launch') }}</button>
 
-                    <h6 class="fw-bold mb-2 text-dark">{{ __('Session Summary') }}</h6>
-                    <div class="row mb-2 px-2 py-2 bg-light rounded align-items-center" style="border-radius: 8px;">
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Token') }}</span>
-                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-token">-</span>
+                    <!-- TOP ROW: Amount (left) + Save & Launch (right) — aligned from top -->
+                    <div class="row g-2 mb-3 align-items-start">
+                        <div class="col-6">
+                            <label for="play-amount" class="form-label fw-bold mb-1" style="font-size: 0.85rem;">{{ __('Charge Amount (Rs.)') }}</label>
+                            <input type="number" class="form-control border-2 border-primary" id="play-amount" required min="0" onclick="this.select()" style="border-radius: 8px; font-size: 1.6rem; font-weight: 800; height: 52px; padding: 0.4rem 0.75rem; letter-spacing: -0.5px;">
+                            <div class="form-text text-muted" style="font-size: 0.67rem;">{{ __('Auto-calculated. Can override.') }}</div>
                         </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Time Limit') }}</span>
-                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-duration">-</span>
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Players') }}</span>
-                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-players">-</span>
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <label for="play-name" class="text-muted d-block text-uppercase mb-0 fw-semibold" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Player Name') }}</label>
-                            <input type="text" class="form-control form-control-sm" id="play-name" placeholder="{{ __('Optional') }}" style="border-radius: 5px; font-size: 0.8rem; height: 28px; padding: 0.15rem 0.4rem;">
+                        <div class="col-6 d-flex flex-column">
+                            <label class="form-label fw-bold mb-1" style="font-size: 0.85rem; visibility: hidden;">{{ __('Action') }}</label>
+                            <button type="button" class="btn fw-bold d-none w-100" id="btn-add-submit" onclick="submitPlayRecord()" style="border-radius: 10px; background-color: #15803d !important; border-color: #15803d !important; color: #ffffff !important; font-size: 1.05rem; height: 52px; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(21,128,61,0.25); transition: all 0.2s ease; margin-top: 3px;">🚀 {{ __('Save & Launch') }}</button>
                         </div>
                     </div>
 
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <label for="play-amount" class="form-label fw-semibold mb-1" style="font-size: 0.8rem;">{{ __('Charge Amount (Rs.)') }}</label>
-                            <input type="number" class="form-control border-2 border-primary" id="play-amount" required min="0" style="border-radius: 6px; font-size: 0.85rem; height: 32px; padding: 0.2rem 0.5rem;">
-                            <div class="form-text text-muted" style="font-size: 0.67rem;">{{ __('Auto-calculated. Can override.') }}</div>
+                    <h6 class="fw-bold mb-2 text-dark">{{ __('Session Summary') }}</h6>
+                    <div class="row mb-2 px-2 py-2 bg-light rounded align-items-center" style="border-radius: 8px;">
+                        <div class="col-4 mb-1">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Token') }}</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-token">-</span>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-4 mb-1">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Time Limit') }}</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-duration">-</span>
+                        </div>
+                        <div class="col-4 mb-1">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Players') }}</span>
+                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-players">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Player Name + Payment Type on same row -->
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label for="play-name" class="form-label fw-semibold mb-1" style="font-size: 0.8rem;">{{ __('Player Name') }}</label>
+                            <input type="text" class="form-control" id="play-name" placeholder="{{ __('Optional') }}" style="border-radius: 6px; font-size: 0.85rem; height: 32px; padding: 0.2rem 0.5rem;">
+                        </div>
+                        <div class="col-6">
                             <label for="play-payment" class="form-label fw-semibold mb-1" style="font-size: 0.8rem;">{{ __('Payment Type') }}</label>
                             <select class="form-select" id="play-payment" required style="border-radius: 6px; font-size: 0.85rem; height: 32px; padding: 0.2rem 0.5rem;">
                                 @foreach($paymentTypes as $pt)
