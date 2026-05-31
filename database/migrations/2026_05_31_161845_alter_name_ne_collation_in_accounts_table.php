@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('accounts', function (Blueprint $table) {
-            $table->string('name_ne')->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable()->after('name');
+            $table->string('name_ne')->charset('utf8mb4')->collation('utf8mb4_unicode_ci')->nullable()->change();
         });
     }
 
@@ -22,7 +22,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('accounts', function (Blueprint $table) {
-            $table->dropColumn('name_ne');
+            // Keep collation as is or fallback
+            $table->string('name_ne')->nullable()->change();
         });
     }
 };
