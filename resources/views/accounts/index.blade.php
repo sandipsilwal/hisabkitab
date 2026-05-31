@@ -25,7 +25,7 @@
             <tbody>
                 @foreach ($accounts as $account)
                     <tr>
-                        <td>{{ $account->name }}</td>
+                        <td>{{ $account->name }} @if($account->name_ne) <span class="text-muted">({{ $account->name_ne }})</span> @endif</td>
                         <td>{{ $account->balance }}</td>
                         <td>{{ $account->is_default_cash_account ? 'Yes' : 'No' }}</td>
                         <td>{{ $account->is_default_online_account ? 'Yes' : 'No' }}</td>

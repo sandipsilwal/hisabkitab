@@ -98,5 +98,20 @@
     "No active (uncompleted) player packages found.<br>Create a player package under Players & Packages profile view first.": "कुनै पनि सक्रिय (अपूर्ण) खेलाडी प्याकेजहरू फेला परेनन्। पहिले खेलाडी र प्याकेज प्रोफाइलमा गएर खेलाडी प्याकेज सिर्जना गर्नुहोस्।",
     "Package Session Summary": "प्याकेज सत्र सारांश",
     "Enter minutes (0 for no limit)": "मिनेट प्रविष्ट गर्नुहोस् (बिना सीमाको लागि ० राख्नुहोस्)",
-    "Close": "बन्द गर्नुहोस्"
+    "Close": "बन्द गर्नुहोस्",
+    "Add Transaction": "दैनिकी हिसाब",
+    "Date (BS)": "मिति (वि.सं.)",
+    "Transaction Rows": "दैनिकी हिसाब",
+    "Add Row": "पङ्क्ति थप्नुहोस्",
+    "Save Transaction": "लेनदेन सुरक्षित गर्नुहोस्",
+    "To Account": "खातामा",
+    "Amount": "रकम",
+    "Remarks": "कैफियत",
+    "Optional": "ऐच्छिक",
+    "Saving...": "बचत गर्दै...",
+    "Transactions created successfully.": "लेनदेन सफलतापूर्वक सिर्जना गरियो।",
+    "Failed to save transactions.": "लेनदेन सुरक्षित गर्न असफल भयो।",
+    "Please fill all required fields.": "कृपया सबै आवश्यक क्षेत्रहरू भर्नुहोस्।",
+    "Please enter the date.": "कृपया मिति प्रविष्ट गर्नुहोस्।",
+    "Total": "कुल"
 }

@@ -80,9 +80,23 @@ class TransactionController extends Controller
                 $account->save();
             }
             DB::commit();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Transactions created successfully.')
+                ]);
+            }
+
             return redirect()->route('transactions.index')->with('success', 'Transactions created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Failed to create transactions: ') . $e->getMessage()
+                ], 500);
+            }
             dd($e);
             return back()->with('error', 'Failed to create transactions.');
         }

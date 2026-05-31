@@ -7,8 +7,12 @@
         <form action="{{ route('accounts.store') }}" method="POST">
             @csrf
             <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
+                <label for="name" class="form-label">Name (English)</label>
                 <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="name_ne" class="form-label">Name (Nepali)</label>
+                <input type="text" class="form-control" id="name_ne" name="name_ne">
             </div>
             <div class="mb-3">
                 <label for="balance" class="form-label">Balance</label>

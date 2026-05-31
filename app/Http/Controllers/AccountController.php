@@ -86,6 +86,7 @@ class AccountController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'name_ne' => 'nullable|string|max:255',
             'balance' => 'required|integer',
         ]);
 
@@ -106,6 +107,7 @@ class AccountController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'name_ne' => 'nullable|string|max:255',
             'balance' => 'required|integer',
         ]);
 

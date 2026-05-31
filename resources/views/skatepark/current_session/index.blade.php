@@ -214,6 +214,43 @@
         border-color: #eab308 !important;
         box-shadow: 0 0 0 0.25rem rgba(234, 179, 8, 0.25) !important;
     }
+
+    /* Nepali datepicker calendar must appear above Bootstrap modals (z-index: 1055) */
+    .ndp-container {
+        z-index: 1100 !important;
+    }
+
+    /* Add Transaction Button Custom Styling & Premium Hover Effects */
+    .btn-add-transaction {
+        background-color: #000000 !important;
+        border: 2px solid #333333 !important;
+        color: #ffffff !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .btn-add-transaction:hover,
+    .btn-add-transaction:active,
+    .btn-add-transaction:focus {
+        background-color: #111111 !important;
+        border-color: #6366f1 !important; /* Indigo accent border */
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    body.dark-mode .btn-add-transaction {
+        border-color: #4b5563 !important;
+    }
+
+    body.dark-mode .btn-add-transaction:hover,
+    body.dark-mode .btn-add-transaction:active,
+    body.dark-mode .btn-add-transaction:focus {
+        background-color: #111111 !important;
+        border-color: #eab308 !important; /* Matches theme's dark mode yellow/gold accent */
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
 </style>
 
 <div class="row mb-4">
@@ -222,6 +259,12 @@
         <button class="btn btn-success px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#packagePlayModal">
             <span>📦</span> {{ __('Package Play') }}
         </button>
+
+        {{-- Add Transaction (center) --}}
+        <button class="btn btn-add-transaction px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+            <span>💳</span> {{ __('Add Transaction') }}
+        </button>
+
         <button class="btn px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px; background-color: #2ecc71 !important; border-color: #2ecc71 !important; color: #ffffff !important;" data-bs-toggle="modal" data-bs-target="#addPlayModal">
             <span>➕</span> {{ __('Add Play') }}
         </button>
@@ -656,6 +699,60 @@
     </div>
 </div>
 
+
+<!-- ==============================================
+     MODAL: ADD TRANSACTION (Quick transaction entry)
+     ============================================== -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header text-white py-3" style="background-color: #6366f1; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title fw-bold">💳 {{ __('Add Transaction') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Total display -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">{{ __('Transaction Rows') }}</h6>
+                    <div class="fw-bold" style="font-size: 0.9rem; color: #6366f1;">
+                        {{ __('Total') }}: Rs. <span id="txn-total-display">0.00</span>
+                    </div>
+                </div>
+
+                <!-- Repeater container -->
+                <div id="txn-repeater-container"></div>
+
+                <!-- Add Row button -->
+                <div class="mb-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm fw-semibold" id="txn-add-row-btn" style="border-radius: 8px;">
+                        ＋ {{ __('Add Row') }}
+                    </button>
+                </div>
+
+                <hr class="text-muted my-3">
+
+                <!-- Date & Action Buttons Row -->
+                <div class="row align-items-end mb-2">
+                    <!-- Left Half: Date (BS) -->
+                    <div class="col-md-6 col-12 mb-3 mb-md-0">
+                        <label for="txn-date-bs" class="form-label fw-bold mb-1" style="font-size: 0.85rem;">{{ __('Date (BS)') }}</label>
+                        <input type="text" class="form-control nepali-datepicker default-today-date" id="txn-date-bs" name="date_bs"
+                               placeholder="YYYY-MM-DD" autocomplete="off"
+                               style="border-radius: 8px; font-size: 0.95rem; height: 38px;" required>
+                    </div>
+                    <!-- Right Half: Action Buttons -->
+                    <div class="col-md-6 col-12 d-flex justify-content-md-end justify-content-start gap-2">
+                        <button type="button" class="btn btn-secondary fw-semibold px-4" style="border-radius: 8px; height: 38px;" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                        <button type="button" class="btn fw-bold px-4" id="txn-submit-btn"
+                                style="border-radius: 8px; background-color: #6366f1; border-color: #6366f1; color: #fff; height: 38px; font-size: 0.95rem;">
+                            ✓ {{ __('Save Transaction') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ==============================================
      DASHBOARD CONTROLLER & REAL-TIME TIMER ENGINE (JS)
@@ -1949,7 +2046,7 @@
             success: function(res) {
                 if (res.success) {
                     $('#editPlayModal').modal('hide');
-                    spokenRecords.delete(parseInt(recordId)); // Clear speech flag in case time was increased
+                    spokenRecords.delete(parseInt(recordId));
                     refreshSessionList();
                 }
             },
@@ -1958,5 +2055,172 @@
             }
         });
     }
+</script>
+
+<script>
+    // ============================================================
+    //  ADD TRANSACTION MODAL
+    // ============================================================
+    const txnAccounts = @json($accounts);
+    const isNepali = {{ app()->getLocale() === 'ne' ? 'true' : 'false' }};
+    let txnRowIndex = 0;
+
+    function buildTxnRow(index) {
+        const accountOptions = txnAccounts.map(function(a) {
+            var sel = (a.is_default_cash_account && index === 0)
+                      ? 'selected'
+                      : (a.is_default_online_account && index === 1 ? 'selected' : '');
+            
+            var nameToShow = a.name;
+            if (isNepali) {
+                nameToShow = a.name_ne ? (a.name_ne + ' (' + a.name + ')') : a.name;
+            }
+
+            return '<option value="' + a.id + '" ' + sel + '>' + nameToShow + '</option>';
+        }).join('');
+
+        return '<div class="txn-row border rounded p-3 mb-2" data-txn-index="' + index + '" style="border-radius:10px!important;background:rgba(99,102,241,0.04)">'
+            + '<div class="row g-2 align-items-end">'
+            + '<div class="col-md-4"><label class="form-label fw-semibold mb-1" style="font-size:.8rem">{{ __("To Account") }}</label>'
+            + '<select class="form-select" required style="border-radius:8px;font-size:.85rem;height:36px;padding:.2rem .5rem">' + accountOptions + '</select></div>'
+            + '<div class="col-md-3"><label class="form-label fw-semibold mb-1" style="font-size:.8rem">{{ __("Amount") }} (Rs.)</label>'
+            + '<input type="number" class="form-control txn-amount-input" min="0" value="0" onclick="this.select()" style="border-radius:8px;font-size:.9rem;height:36px;padding:.2rem .5rem"></div>'
+            + '<div class="col-md-4"><label class="form-label fw-semibold mb-1" style="font-size:.8rem">{{ __("Remarks") }}</label>'
+            + '<input type="text" class="form-control" placeholder="{{ __("Optional") }}" style="border-radius:8px;font-size:.85rem;height:36px;padding:.2rem .5rem"></div>'
+            + '<div class="col-md-1 d-flex align-items-end justify-content-end">'
+            + '<button type="button" class="btn btn-sm btn-outline-danger txn-remove-row fw-bold" style="border-radius:8px;height:36px;width:36px;padding:0">✕</button></div>'
+            + '</div></div>';
+    }
+
+    function recalcTxnTotal() {
+        var total = 0;
+        document.querySelectorAll('.txn-amount-input').forEach(function(inp) {
+            total += parseFloat(inp.value) || 0;
+        });
+        document.getElementById('txn-total-display').textContent = total.toFixed(2);
+    }
+
+    function initTxnModal() {
+        txnRowIndex = 0;
+        var container = document.getElementById('txn-repeater-container');
+        container.innerHTML = '';
+        container.insertAdjacentHTML('beforeend', buildTxnRow(txnRowIndex++));
+        container.insertAdjacentHTML('beforeend', buildTxnRow(txnRowIndex++));
+        recalcTxnTotal();
+    }
+
+    // Call immediately — DOM is available at this point in the body
+    initTxnModal();
+
+    document.getElementById('txn-add-row-btn').addEventListener('click', function() {
+        document.getElementById('txn-repeater-container').insertAdjacentHTML('beforeend', buildTxnRow(txnRowIndex++));
+        recalcTxnTotal();
+    });
+
+    document.getElementById('txn-repeater-container').addEventListener('input', function(e) {
+        if (e.target.classList.contains('txn-amount-input')) recalcTxnTotal();
+    });
+
+    document.getElementById('txn-repeater-container').addEventListener('click', function(e) {
+        var btn = e.target.closest('.txn-remove-row');
+        if (!btn) return;
+        if (document.querySelectorAll('.txn-row').length <= 1) return;
+        btn.closest('.txn-row').remove();
+        recalcTxnTotal();
+    });
+
+    document.getElementById('txn-submit-btn').addEventListener('click', function() {
+        var dateBS = document.getElementById('txn-date-bs').value.trim();
+        if (!dateBS) {
+            alert("{{ __('Please enter the date.') }}");
+            document.getElementById('txn-date-bs').focus();
+            return;
+        }
+
+        var rows = document.querySelectorAll('.txn-row');
+        var transactions = [];
+        var valid = true;
+        rows.forEach(function(row) {
+            var toAccount = row.querySelector('select').value;
+            var amount    = parseFloat(row.querySelector('.txn-amount-input').value) || 0;
+            var remarks   = row.querySelector('input[type="text"]').value;
+            if (!toAccount) valid = false;
+            transactions.push({ to_account_id: toAccount, amount: amount, remarks: remarks });
+        });
+
+        if (!valid) { alert("{{ __('Please fill all required fields.') }}"); return; }
+
+        var total = transactions.reduce(function(s, t) { return s + (parseFloat(t.amount) || 0); }, 0);
+
+        var submitBtn = document.getElementById('txn-submit-btn');
+        submitBtn.disabled = true;
+        var originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + "{{ __('Saving...') }}";
+
+        var payload = {
+            _token: "{{ csrf_token() }}",
+            date_bs: dateBS,
+            total: total,
+            transactions: transactions
+        };
+
+        $.ajax({
+            url: "{{ route('transactions.store') }}",
+            type: "POST",
+            data: payload,
+            dataType: "json",
+            success: function(res) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                if (res.success) {
+                    // Close the modal using Bootstrap
+                    $('#addTransactionModal').modal('hide');
+                    alert(res.message || "{{ __('Transactions created successfully.') }}");
+                } else {
+                    alert(res.message || "{{ __('Failed to save transactions.') }}");
+                }
+            },
+            error: function(xhr) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                var errMsg = "{{ __('Failed to save transactions.') }}";
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                }
+                alert(errMsg);
+            }
+        });
+    });
+
+    // ── Datepicker + modal events ──────────────────────────────────
+    // window 'load' fires AFTER all external scripts (jQuery, nepali datepicker CDN)
+    // have fully loaded, so $ and $.fn.nepaliDatePicker are safe to use here.
+    window.addEventListener('load', function() {
+        function getTodayBS() {
+            if (typeof NepaliFunctions !== 'undefined' && NepaliFunctions.BS) {
+                try {
+                    var d = NepaliFunctions.BS.GetCurrentDate();
+                    return NepaliFunctions.ConvertToDateFormat(d, 'YYYY-MM-DD');
+                } catch(e) {}
+            }
+            return '';
+        }
+
+        var txnModal = document.getElementById('addTransactionModal');
+
+        txnModal.addEventListener('shown.bs.modal', function() {
+            // The layout's initializeDatePickers() already bound the calendar on document.ready.
+            // Just reset the value to today — do NOT focus (that auto-opens the calendar).
+            var todayBS = getTodayBS();
+            var dateInput = document.getElementById('txn-date-bs');
+            if (dateInput) {
+                dateInput.value = todayBS;
+            }
+        });
+
+        txnModal.addEventListener('hidden.bs.modal', function() {
+            initTxnModal();
+        });
+    });
 </script>
 @endsection

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\PlayRecord;
 use App\Models\Token;
 use App\Models\DefaultTime;
@@ -34,12 +35,16 @@ class CurrentSessionController extends Controller
             ->with(['player', 'package.gameType'])
             ->get();
 
+        // Load accounts for the quick transaction modal
+        $accounts = Account::all();
+
         return view('skatepark.current_session.index', compact(
             'tokens',
             'defaultTimes',
             'paymentTypes',
             'defaultPaymentType',
-            'playerPackages'
+            'playerPackages',
+            'accounts'
         ));
     }
 
