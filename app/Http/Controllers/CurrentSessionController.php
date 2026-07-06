@@ -98,7 +98,7 @@ class CurrentSessionController extends Controller
             'name' => 'nullable|string|max:255',
             'player_type' => 'required|in:normal,package',
             'player_package_id' => 'nullable|exists:player_packages,id',
-            'token_id' => 'required|exists:tokens,id',
+            'token_id' => 'nullable|exists:tokens,id',
             'default_time' => 'nullable|integer|min:0', // minutes (0 or null means No Limit)
             'no_of_players' => 'required|integer|min:1',
             'amount' => 'required|integer|min:0',
@@ -106,15 +106,17 @@ class CurrentSessionController extends Controller
         ]);
 
         // Double check if token is currently in use in an active session
-        $tokenInUse = PlayRecord::where('token_id', $request->token_id)
-            ->whereNull('end_time')
-            ->exists();
+        if ($request->token_id) {
+            $tokenInUse = PlayRecord::where('token_id', $request->token_id)
+                ->whereNull('end_time')
+                ->exists();
 
-        if ($tokenInUse) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This token is currently in use in an active play session!'
-            ], 422);
+            if ($tokenInUse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This token is currently in use in an active play session!'
+                ], 422);
+            }
         }
 
         $playRecord = PlayRecord::create([

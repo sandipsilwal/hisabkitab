@@ -329,6 +329,24 @@
 
                 <!-- STEP 1: TOKEN SELECTION -->
                 <div id="add-step-1">
+
+                    <!-- Player Name Entry (name-based path) -->
+                    <div class="mb-3 p-3 border rounded" style="border-radius: 10px !important; background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(168,85,247,0.05)); border-color: rgba(99,102,241,0.2) !important;">
+                        <label for="add-player-name" class="form-label fw-bold mb-1" style="font-size: 0.85rem; color: #6366f1;">🎮 {{ __('Player Name') }}</label>
+                        <p class="text-muted mb-2" style="font-size: 0.75rem;">{{ __('Enter the player\'s name and proceed — or skip directly by selecting a token below.') }}</p>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="add-player-name" placeholder="{{ __('e.g. Sandip, Team Alpha...') }}" style="border-radius: 8px 0 0 8px; font-size: 0.95rem;" autocomplete="off">
+                            <button type="button" class="btn btn-primary fw-bold px-4" onclick="submitPlayerNameAndProceed()" style="border-radius: 0 8px 8px 0;">{{ __('Proceed') }} →</button>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <hr class="flex-grow-1 m-0">
+                        <span class="text-muted fw-semibold" style="font-size: 0.78rem; white-space: nowrap;">{{ __('OR SELECT A TOKEN') }}</span>
+                        <hr class="flex-grow-1 m-0">
+                    </div>
+
                     <h5 class="fw-bold mb-3 text-dark">{{ __('Select Token') }}</h5>
                     <div class="row g-3" id="add-tokens-container">
                         @forelse($tokens as $index => $t)
@@ -413,7 +431,7 @@
                     <h6 class="fw-bold mb-2 text-dark">{{ __('Session Summary') }}</h6>
                     <div class="row mb-2 px-2 py-2 bg-light rounded align-items-center" style="border-radius: 8px;">
                         <div class="col-4 mb-1">
-                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Token') }}</span>
+                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Token / Player') }}</span>
                             <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="summary-token">-</span>
                         </div>
                         <div class="col-4 mb-1">
@@ -426,13 +444,9 @@
                         </div>
                     </div>
 
-                    <!-- Player Name + Payment Type on same row -->
+                    <!-- Payment Type (Player Name moved to Step 1) -->
                     <div class="row g-2">
-                        <div class="col-6">
-                            <label for="play-name" class="form-label fw-semibold mb-1" style="font-size: 0.8rem;">{{ __('Player Name') }}</label>
-                            <input type="text" class="form-control" id="play-name" placeholder="{{ __('Optional') }}" style="border-radius: 6px; font-size: 0.85rem; height: 32px; padding: 0.2rem 0.5rem;">
-                        </div>
-                        <div class="col-6">
+                        <div class="col-12">
                             <label for="play-payment" class="form-label fw-semibold mb-1" style="font-size: 0.8rem;">{{ __('Payment Type') }}</label>
                             <select class="form-select" id="play-payment" required style="border-radius: 6px; font-size: 0.85rem; height: 32px; padding: 0.2rem 0.5rem;">
                                 @foreach($paymentTypes as $pt)
@@ -1591,6 +1605,33 @@
         addData.token_name = name;
         addData.game_type_id = gameTypeId;
         addData.game_name = gameName;
+        // When selecting a token, player name is null
+        addData.name = null;
+
+        // Progress to Step 2
+        addStep = 2;
+        $('#add-step-1').addClass('d-none');
+        $('#add-step-2').removeClass('d-none');
+        $('#step-ind-1').removeClass('text-primary border-primary border-3 fw-bold').addClass('text-muted fw-semibold');
+        $('#step-ind-2').addClass('text-primary border-primary border-3 fw-bold').removeClass('text-muted fw-semibold');
+        $('#btn-add-back').removeAttr('disabled');
+    }
+
+    function submitPlayerNameAndProceed() {
+        const playerName = $('#add-player-name').val().trim();
+        if (!playerName) {
+            $('#add-player-name').focus();
+            $('#add-player-name').addClass('is-invalid');
+            setTimeout(() => $('#add-player-name').removeClass('is-invalid'), 2000);
+            return;
+        }
+        // When proceeding by name, token is null
+        addData.name = playerName;
+        addData.token_id = null;
+        addData.token_name = null;
+        // game_type_id and game_name remain null/empty since no token is selected
+        addData.game_type_id = null;
+        addData.game_name = '';
 
         // Progress to Step 2
         addStep = 2;
@@ -1639,7 +1680,9 @@
 
     function proceedToSummary() {
         // Renders details to summary step
-        $('#summary-token').text(addData.token_name);
+        // Show player name (name-path) or token name (token-path) in summary
+        const tokenLabel = addData.token_name ? addData.token_name : (addData.name ? '👤 ' + addData.name : '-');
+        $('#summary-token').text(tokenLabel);
         $('#summary-duration').text(addData.default_time === 0 ? "{{ __('Unlimited (Count Up)') }}" : addData.default_time + ' ' + "{{ __('Minutes') }}");
         $('#summary-players').text(addData.no_of_players + ' ' + "{{ __('Players') }}");
 
@@ -1699,8 +1742,8 @@
     }
 
     function submitPlayRecord() {
-        // Collect custom overridden amount & payment & name
-        addData.name = $('#play-name').val();
+        // Collect custom overridden amount & payment (name was captured in Step 1)
+        // addData.name is already set in Step 1 (either from name-input or null from token selection)
         addData.amount = parseInt($('#play-amount').val()) || 0;
         addData.payment_type_id = $('#play-payment').val();
 
@@ -1749,7 +1792,7 @@
 
         $('#custom-minutes').val('');
         $('#custom-players').val('1');
-        $('#play-name').val('');
+        $('#add-player-name').val('').removeClass('is-invalid');
         
         addData = {
             name: '',
