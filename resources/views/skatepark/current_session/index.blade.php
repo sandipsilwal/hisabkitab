@@ -366,7 +366,7 @@
      MODAL: ADD NORMAL PLAY (Multi-Step popup)
      ============================================== -->
 <div class="modal fade" id="addPlayModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg mt-5 mt-md-4">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-dark text-white py-3">
                 <h5 class="modal-title fw-bold">{{ __('Add Play Session') }}</h5>
@@ -523,7 +523,7 @@
      MODAL: ADD PACKAGE PLAY (Multi-Step popup)
      ============================================== -->
 <div class="modal fade" id="packagePlayModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg mt-5 mt-md-4">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-success text-white py-3">
                 <h5 class="modal-title fw-bold">{{ __('Package Play Session') }}</h5>
@@ -660,7 +660,7 @@
      MODAL: SINGLE STEP EDIT FORM (Direct edit)
      ============================================== -->
 <div class="modal fade" id="editPlayModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog" style="max-width: 600px;">
+    <div class="modal-dialog mt-5 mt-md-4" style="max-width: 600px;">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-dark text-white py-3">
                 <h5 class="modal-title fw-bold">{{ __('Edit Play Details') }}</h5>
@@ -739,7 +739,7 @@
      MODAL: BEAUTIFUL BOOTSTRAP CONFIRMATION DIALOG
      ============================================== -->
 <div class="modal fade" id="dynamicConfirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4" style="max-width: 450px;">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-dark text-white py-3">
                 <h5 class="modal-title fw-bold" id="confirm-modal-title">{{ __('Confirm Action') }}</h5>
@@ -772,7 +772,7 @@
      MODAL: ADD TRANSACTION (Quick transaction entry)
      ============================================== -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg mt-5 mt-md-4">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header text-white py-3" style="background-color: #6366f1; border-radius: 16px 16px 0 0;">
                 <h5 class="modal-title fw-bold">💳 {{ __('Add Transaction') }}</h5>
