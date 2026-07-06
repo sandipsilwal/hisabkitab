@@ -115,6 +115,26 @@
         padding: 3rem 0 !important;
     }
     
+    .list-scroll-container {
+        height: 530px; 
+        overflow-y: auto; 
+        padding-right: 8px;
+    }
+
+    @media (max-width: 991.98px) {
+        .list-scroll-container {
+            height: auto !important;
+            max-height: none !important;
+        }
+        #playing-placeholder, #overtime-placeholder {
+            padding: 0.5rem 0 !important;
+            font-size: 0.85rem;
+        }
+        #playing-placeholder i, #overtime-placeholder i,
+        #playing-placeholder br, #overtime-placeholder br {
+            display: none !important;
+        }
+    }
 
     body.dark-mode .skate-item {
         border-bottom-color: #ffffff !important;
@@ -251,28 +271,62 @@
         box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35) !important;
         transform: translateY(-2px) !important;
     }
+
+    /* Mobile Responsive Overrides for smaller fonts and buttons */
+    @media (max-width: 575.98px) {
+        .timer-display {
+            font-size: 1.15rem !important;
+        }
+        .badge-token {
+            font-size: 0.95rem !important;
+        }
+        h5.fw-bold.text-dark {
+            font-size: 1.1rem !important;
+        }
+        .skate-item {
+            padding: 0.5rem 0.25rem;
+        }
+        .skate-item .btn {
+            font-size: 0.75rem !important;
+            height: 30px !important;
+            padding: 0 0.5rem !important;
+        }
+        .action-btn-container-0 button, .action-btn-container-0 .btn {
+            width: auto !important;
+        }
+        /* Make top action buttons slightly smaller */
+        .row.mb-4.g-2 .btn {
+            font-size: 0.9rem !important;
+            padding-top: 0.4rem !important;
+            padding-bottom: 0.4rem !important;
+        }
+    }
 </style>
 
-<div class="row mb-4">
+<div class="row mb-4 g-2">
     <!-- Action Buttons -->
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <button class="btn btn-success px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#packagePlayModal">
+    <div class="col-6 col-md-4">
+        <button class="btn btn-success w-100 px-2 px-md-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1 gap-md-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#packagePlayModal">
             <span>📦</span> {{ __('Package Play') }}
         </button>
+    </div>
 
-        {{-- Add Transaction (center) --}}
-        <button class="btn btn-add-transaction px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+    {{-- Add Transaction (center) --}}
+    <div class="col-6 col-md-4">
+        <button class="btn btn-add-transaction w-100 px-2 px-md-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1 gap-md-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
             <span>💳</span> {{ __('Add Transaction') }}
         </button>
+    </div>
 
-        <button class="btn px-4 py-2.5 fw-bold shadow-sm d-flex align-items-center gap-2" style="border-radius: 10px; background-color: #2ecc71 !important; border-color: #2ecc71 !important; color: #ffffff !important;" data-bs-toggle="modal" data-bs-target="#addPlayModal">
+    <div class="col-12 col-md-4">
+        <button class="btn w-100 px-3 px-md-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="border-radius: 10px; background-color: #2ecc71 !important; border-color: #2ecc71 !important; color: #ffffff !important;" data-bs-toggle="modal" data-bs-target="#addPlayModal">
             <span>➕</span> {{ __('Add Play') }}
         </button>
     </div>
 </div>
 
 <!-- Main Split Board View -->
-<div class="row">
+<div class="row d-flex flex-column-reverse flex-lg-row">
     <!-- Left Column: Playing Players -->
     <div class="col-lg-6 mb-4 border-end-desktop pe-lg-4">
         <div class="d-flex justify-content-center align-items-center gap-2 mb-3 pb-2">
@@ -281,7 +335,7 @@
             </h5>
             <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-semibold" id="count-playing" style="font-size: 0.8rem;">0 {{ __('Active') }}</span>
         </div>
-        <div class="d-flex flex-column gap-2" id="playing-list" style="height: 530px; overflow-y: auto; padding-right: 8px;">
+        <div class="d-flex flex-column gap-2 list-scroll-container" id="playing-list">
             <!-- Inner items will be dynamically appended here -->
             <div class="text-center py-5 text-muted my-auto" id="playing-placeholder">
                 <i class="fs-1 d-block mb-2 text-secondary">🛹</i>
@@ -298,7 +352,7 @@
             </h5>
             <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-0.5 fw-semibold" id="count-overtime" style="font-size: 0.8rem;">0 {{ __('Expired') }}</span>
         </div>
-        <div class="d-flex flex-column gap-2" id="overtime-list" style="height: 530px; overflow-y: auto; padding-right: 8px;">
+        <div class="d-flex flex-column gap-2 list-scroll-container" id="overtime-list">
             <!-- Inner items will be dynamically appended here -->
             <div class="text-center py-5 text-muted my-auto" id="overtime-placeholder">
                 <i class="fs-1 d-block mb-2 text-secondary">🔔</i>
@@ -417,13 +471,13 @@
 
                     <!-- TOP ROW: Amount (left) + Save & Launch (right) — aligned from top -->
                     <div class="row g-2 mb-3 align-items-start">
-                        <div class="col-6">
+                        <div class="col-12 col-sm-6">
                             <label for="play-amount" class="form-label fw-bold mb-1" style="font-size: 0.85rem;">{{ __('Charge Amount (Rs.)') }}</label>
                             <input type="number" class="form-control border-2 border-primary" id="play-amount" required min="0" onclick="this.select()" style="border-radius: 8px; font-size: 1.6rem; font-weight: 800; height: 52px; padding: 0.4rem 0.75rem; letter-spacing: -0.5px;">
                             <div class="form-text text-muted" style="font-size: 0.67rem;">{{ __('Auto-calculated. Can override.') }}</div>
                         </div>
-                        <div class="col-6 d-flex flex-column">
-                            <label class="form-label fw-bold mb-1" style="font-size: 0.85rem; visibility: hidden;">{{ __('Action') }}</label>
+                        <div class="col-12 col-sm-6 d-flex flex-column mt-sm-0 mt-2">
+                            <label class="form-label fw-bold mb-1 d-none d-sm-block" style="font-size: 0.85rem; visibility: hidden;">{{ __('Action') }}</label>
                             <button type="button" class="btn fw-bold d-none w-100" id="btn-add-submit" onclick="submitPlayRecord()" style="border-radius: 10px; background-color: #15803d !important; border-color: #15803d !important; color: #ffffff !important; font-size: 1.05rem; height: 52px; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(21,128,61,0.25); transition: all 0.2s ease; margin-top: 3px;">🚀 {{ __('Save & Launch') }}</button>
                         </div>
                     </div>
@@ -844,6 +898,11 @@
         
         // Start high-precision 1-second dynamic countdown interval
         timerInterval = setInterval(updateTimers, 1000);
+
+        // Auto-focus player name when Add Play modal opens
+        $('#addPlayModal').on('shown.bs.modal', function () {
+            $('#add-player-name').focus();
+        });
 
         // Reset Add Play modal steps on closing
         $('#addPlayModal').on('hidden.bs.modal', function () {
@@ -1310,25 +1369,25 @@
         }
 
         return `
-            <div class="skate-item d-flex align-items-center justify-content-between" id="card-${record.id}" data-id="${record.id}" style="min-height: 74px; padding: 0.65rem 0.5rem;">
+            <div class="skate-item d-flex align-items-center justify-content-between gap-1" id="card-${record.id}" data-id="${record.id}" style="min-height: 74px; padding: 0.65rem 0.25rem;">
                 <!-- Left: Content Columns (Row 1 + Row 2) -->
                 <div class="flex-grow-1 d-flex flex-column" style="min-width: 0;">
                     <!-- Row 1: Token, Counter -->
-                    <div class="d-flex justify-content-between align-items-center w-100">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center w-100 gap-1">
                         <!-- Left: Token / Player Name -->
-                        <div class="d-flex align-items-center gap-1" style="flex-shrink: 0; min-width: 80px;">
+                        <div class="d-flex align-items-center gap-1" style="flex-shrink: 0; min-width: 60px; max-width: 100%; word-break: break-word;">
                             <span class="badge-token text-dark" style="font-size: 1.15rem; font-weight: 800;" title="Token: ${tokenName}">${badgeText}</span>
                         </div>
                         
                         <!-- Middle: Timer Counter -->
-                        <div class="d-flex align-items-baseline justify-content-center flex-grow-1 mx-2" style="min-width: 0;">
+                        <div class="d-flex flex-wrap align-items-baseline justify-content-start justify-content-sm-center flex-grow-1 mx-0 mx-sm-2" style="min-width: 0;">
                             <span class="timer-display text-dark" id="timer-${record.id}" style="font-size: 1.45rem; line-height: 1; font-weight: 800; letter-spacing: -0.5px;">${initialTimerText}</span>
                             ${startTimeHtml}
                         </div>
                     </div>
 
                     <!-- Row 2: Horizontal Session Details -->
-                    <div class="d-flex justify-content-between align-items-center pt-2 mt-2 text-secondary font-monospace" style="font-size: 0.90rem;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 mt-2 text-secondary font-monospace gap-1" style="font-size: 0.82rem;">
                         <span><strong class="text-dark">${record.no_of_players} ${translations.playerCountText}</strong></span>
                         <span>Rs${record.amount}/${record.payment_type.name}</span>
                         <span>${translations.limitText}:<strong>${record.default_time ? record.default_time + 'm' : '∞'}</strong></span>
@@ -1336,7 +1395,7 @@
                 </div>
 
                 <!-- Right: Action Buttons (Edit/Delete vertical stack + Big Button) -->
-                <div class="d-flex align-items-center gap-2 ms-3" style="flex-shrink: 0;">
+                <div class="d-flex align-items-center justify-content-end gap-1 ms-1 ms-sm-2" style="flex-shrink: 0;">
                     ${editDeleteStackHtml}
                     <div class="action-btn-container-${record.id}">
                         ${bigActionBtnHtml}
