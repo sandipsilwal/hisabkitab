@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\GameType;
 use App\Models\PlayRecord;
 use App\Models\Token;
 use App\Models\DefaultTime;
@@ -29,6 +30,8 @@ class CurrentSessionController extends Controller
         $paymentTypes = PaymentType::all();
         // Find default payment type
         $defaultPaymentType = PaymentType::where('is_default', true)->first() ?? PaymentType::first();
+        // Find default game type
+        $defaultGameType = GameType::where('is_default', true)->first();
 
         // Load active player packages (uncompleted)
         $playerPackages = PlayerPackage::where('package_status', '!=', 'completed')
@@ -43,6 +46,7 @@ class CurrentSessionController extends Controller
             'defaultTimes',
             'paymentTypes',
             'defaultPaymentType',
+            'defaultGameType',
             'playerPackages',
             'accounts'
         ));
@@ -54,7 +58,7 @@ class CurrentSessionController extends Controller
     public function getSessionData()
     {
         $activeRecords = PlayRecord::whereNull('end_time')
-            ->with(['token.gameType', 'playerPackage.player', 'paymentType'])
+            ->with(['token.gameType', 'gameType', 'playerPackage.player', 'paymentType'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -71,15 +75,21 @@ class CurrentSessionController extends Controller
     public function lookupRate(Request $request)
     {
         $request->validate([
-            'game_type_id' => 'required|exists:game_types,id',
+            'game_type_id' => 'nullable|exists:game_types,id',
             'default_time_id' => 'nullable|exists:default_times,id',
         ]);
 
-        if (!$request->default_time_id) {
+        $gameTypeId = $request->game_type_id;
+        if (!$gameTypeId) {
+            $defaultGameType = GameType::where('is_default', true)->first();
+            $gameTypeId = $defaultGameType?->id;
+        }
+
+        if (!$request->default_time_id || !$gameTypeId) {
             return response()->json(['success' => true, 'rate' => 0]);
         }
 
-        $rate = Rate::where('game_type_id', $request->game_type_id)
+        $rate = Rate::where('game_type_id', $gameTypeId)
             ->where('default_time_id', $request->default_time_id)
             ->first();
 
@@ -99,6 +109,7 @@ class CurrentSessionController extends Controller
             'player_type' => 'required|in:normal,package',
             'player_package_id' => 'nullable|exists:player_packages,id',
             'token_id' => 'nullable|exists:tokens,id',
+            'game_type_id' => 'nullable|exists:game_types,id',
             'default_time' => 'nullable|integer|min:0', // minutes (0 or null means No Limit)
             'no_of_players' => 'required|integer|min:1',
             'amount' => 'required|integer|min:0',
@@ -119,11 +130,27 @@ class CurrentSessionController extends Controller
             }
         }
 
+        // Determine game_type_id
+        $gameTypeId = $request->game_type_id;
+        if (!$gameTypeId && $request->token_id) {
+            $token = Token::find($request->token_id);
+            $gameTypeId = $token?->game_type_id;
+        }
+        if (!$gameTypeId && $request->player_type === 'package' && $request->player_package_id) {
+            $pp = PlayerPackage::with('package')->find($request->player_package_id);
+            $gameTypeId = $pp?->package?->game_type_id;
+        }
+        if (!$gameTypeId) {
+            $defaultGameType = GameType::where('is_default', true)->first();
+            $gameTypeId = $defaultGameType?->id;
+        }
+
         $playRecord = PlayRecord::create([
             'name' => $request->name,
             'player_type' => $request->player_type,
             'player_package_id' => $request->player_type === 'package' ? $request->player_package_id : null,
             'token_id' => $request->token_id,
+            'game_type_id' => $gameTypeId,
             'default_time' => $request->default_time,
             'start_time' => null, // Stored as null initially, started manually
             'end_time' => null,
@@ -136,7 +163,7 @@ class CurrentSessionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Play record added successfully!',
-            'data' => $playRecord
+            'data' => $playRecord->load(['token.gameType', 'gameType', 'paymentType'])
         ]);
     }
 
@@ -259,7 +286,8 @@ class CurrentSessionController extends Controller
 
         $request->validate([
             'name' => 'nullable|string|max:255',
-            'token_id' => 'required|exists:tokens,id',
+            'token_id' => 'nullable|exists:tokens,id',
+            'game_type_id' => 'nullable|exists:game_types,id',
             'default_time' => 'nullable|integer|min:0',
             'no_of_players' => 'required|integer|min:1',
             'amount' => 'required|integer|min:0',
@@ -268,23 +296,35 @@ class CurrentSessionController extends Controller
         ]);
 
         // Verify if token is in use by another session
-        $tokenInUse = PlayRecord::where('token_id', $request->token_id)
-            ->whereNull('end_time')
-            ->where('id', '!=', $playRecord->id)
-            ->exists();
+        if ($request->token_id) {
+            $tokenInUse = PlayRecord::where('token_id', $request->token_id)
+                ->whereNull('end_time')
+                ->where('id', '!=', $playRecord->id)
+                ->exists();
 
-        if ($tokenInUse) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This token is currently in use in another active play session!'
-            ], 422);
+            if ($tokenInUse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This token is currently in use in another active play session!'
+                ], 422);
+            }
         }
 
         $startTime = $request->start_time ? Carbon::parse($request->start_time) : $playRecord->start_time;
 
+        $gameTypeId = $request->game_type_id;
+        if (!$gameTypeId && $request->token_id) {
+            $token = Token::find($request->token_id);
+            $gameTypeId = $token?->game_type_id;
+        }
+        if (!$gameTypeId) {
+            $gameTypeId = $playRecord->game_type_id;
+        }
+
         $playRecord->update([
             'name' => $request->name,
-            'token_id' => $request->token_id,
+            'token_id' => $request->token_id ?: null,
+            'game_type_id' => $gameTypeId,
             'default_time' => $request->default_time,
             'no_of_players' => $request->no_of_players,
             'amount' => $playRecord->player_type === 'package' ? 0 : $request->amount,
@@ -295,7 +335,7 @@ class CurrentSessionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Play record updated successfully!',
-            'data' => $playRecord->load(['token.gameType', 'paymentType'])
+            'data' => $playRecord->load(['token.gameType', 'gameType', 'paymentType'])
         ]);
     }
 
@@ -333,7 +373,7 @@ class CurrentSessionController extends Controller
 
         $records = PlayRecord::whereNotNull('end_time')
             ->whereBetween('end_time', [$fromDt, $toDt])
-            ->with(['token.gameType', 'paymentType', 'playerPackage.player'])
+            ->with(['token.gameType', 'gameType', 'paymentType', 'playerPackage.player'])
             ->orderBy('end_time', 'desc')
             ->get();
 

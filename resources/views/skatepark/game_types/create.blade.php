@@ -16,6 +16,12 @@
                         <input type="text" class="form-control" id="game_name" name="game_name" placeholder="e.g. Skateboarding, Scooter" value="{{ old('game_name') }}" required style="border-radius: 8px;">
                     </div>
 
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold" for="is_default">Set as Default Game Type</label>
+                        <div class="form-text text-muted" style="font-size: 0.78rem;">Setting this as default will unmark any other default game type.</div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{{ route('game_types.index') }}" class="btn btn-light border fw-semibold px-4" style="border-radius: 8px;">
                             Cancel

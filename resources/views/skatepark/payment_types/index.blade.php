@@ -15,7 +15,8 @@
                     <tr>
                         <th class="ps-4 text-start py-3" style="width: 100px;">ID</th>
                         <th class="text-start py-3">Payment Type Name</th>
-                        <th class="text-center py-3" style="width: 150px;">Default</th>
+                        <th class="text-center py-3" style="width: 130px;">Default</th>
+                        <th class="text-center py-3" style="width: 130px;">Alert Status</th>
                         <th class="pe-4 text-end py-3" style="width: 200px;">Actions</th>
                     </tr>
                 </thead>
@@ -28,6 +29,15 @@
                                 @if($paymentType->is_default)
                                     <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5" style="border-radius: 30px;">
                                         ★ Default
+                                    </span>
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($paymentType->is_alert)
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5 fw-bold" style="border-radius: 30px;">
+                                        ⚠️ Alert
                                     </span>
                                 @else
                                     <span class="text-muted small">-</span>
@@ -50,7 +60,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="fs-1 d-block mb-2 text-secondary">💳</i>
                                 No payment types registered yet. Click "+ Add Payment Type" to begin.
                             </td>

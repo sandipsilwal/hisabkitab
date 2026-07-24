@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class GameType extends Model
 {
-    protected $fillable = ['game_name'];
+    protected $fillable = ['game_name', 'is_default'];
+
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
 
     public function tokens()
     {

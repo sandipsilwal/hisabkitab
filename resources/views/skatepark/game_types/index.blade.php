@@ -15,6 +15,7 @@
                     <tr>
                         <th class="ps-4 text-start py-3" style="width: 100px;">ID</th>
                         <th class="text-start py-3">Game Name</th>
+                        <th class="text-center py-3" style="width: 120px;">Is Default</th>
                         <th class="pe-4 text-end py-3" style="width: 200px;">Actions</th>
                     </tr>
                 </thead>
@@ -23,6 +24,13 @@
                         <tr>
                             <td class="ps-4 text-start font-monospace text-muted">{{ $gameType->id }}</td>
                             <td class="text-start fw-semibold text-dark">{{ $gameType->game_name }}</td>
+                            <td class="text-center">
+                                @if($gameType->is_default)
+                                    <span class="badge bg-success px-2 py-1 fw-bold">✓ Default</span>
+                                @else
+                                    <span class="badge bg-light text-muted border px-2 py-1">—</span>
+                                @endif
+                            </td>
                             <td class="pe-4 text-end">
                                 <a href="{{ route('game_types.edit', $gameType->id) }}" class="btn btn-outline-warning btn-sm me-1" style="border-radius: 6px;">
                                     Edit
@@ -38,7 +46,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center py-5 text-muted">
+                            <td colspan="4" class="text-center py-5 text-muted">
                                 <i class="fs-1 d-block mb-2 text-secondary">🎮</i>
                                 No game types registered yet. Click "+ Add Game Type" to begin.
                             </td>

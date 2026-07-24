@@ -11,6 +11,7 @@ class PlayRecord extends Model
         'player_type',
         'player_package_id',
         'token_id',
+        'game_type_id',
         'default_time',
         'start_time',
         'end_time',
@@ -33,6 +34,11 @@ class PlayRecord extends Model
     public function token()
     {
         return $this->belongsTo(Token::class);
+    }
+
+    public function gameType()
+    {
+        return $this->belongsTo(GameType::class);
     }
 
     public function paymentType()

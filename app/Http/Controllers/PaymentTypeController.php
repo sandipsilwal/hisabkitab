@@ -23,9 +23,11 @@ class PaymentTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'is_default' => 'nullable|boolean',
+            'is_alert' => 'nullable|boolean',
         ]);
 
         $isDefault = $request->has('is_default');
+        $isAlert = $request->has('is_alert');
 
         if ($isDefault) {
             PaymentType::query()->update(['is_default' => false]);
@@ -34,6 +36,7 @@ class PaymentTypeController extends Controller
         PaymentType::create([
             'name' => $request->name,
             'is_default' => $isDefault,
+            'is_alert' => $isAlert,
         ]);
 
         return redirect()->route('payment_types.index')->with('success', 'Payment Type created successfully.');
@@ -49,9 +52,11 @@ class PaymentTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'is_default' => 'nullable|boolean',
+            'is_alert' => 'nullable|boolean',
         ]);
 
         $isDefault = $request->has('is_default');
+        $isAlert = $request->has('is_alert');
 
         if ($isDefault) {
             PaymentType::query()->update(['is_default' => false]);
@@ -60,6 +65,7 @@ class PaymentTypeController extends Controller
         $paymentType->update([
             'name' => $request->name,
             'is_default' => $isDefault,
+            'is_alert' => $isAlert,
         ]);
 
         return redirect()->route('payment_types.index')->with('success', 'Payment Type updated successfully.');

@@ -22,6 +22,12 @@
                         <div class="form-text text-muted">Setting this to default will unset any other default payment types automatically.</div>
                     </div>
 
+                    <div class="form-check form-switch mb-3 p-3 bg-light rounded" style="padding-left: 3.5rem;">
+                        <input class="form-check-input" type="checkbox" role="switch" id="is_alert" name="is_alert" value="1" {{ old('is_alert') ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold text-dark" for="is_alert">Set as Alert Payment Type ⚠️</label>
+                        <div class="form-text text-muted">Active sessions with this payment type will be highlighted with an alert background color and confirmation check.</div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{{ route('payment_types.index') }}" class="btn btn-light border fw-semibold px-4" style="border-radius: 8px;">
                             Cancel

@@ -18,9 +18,9 @@ class SkateParkSeeder extends Seeder
     public function run(): void
     {
         // 1. Game Types
-        $skateboard = GameType::create(['game_name' => 'Skateboarding']);
-        $rollerskate = GameType::create(['game_name' => 'Roller Skating']);
-        $scooter = GameType::create(['game_name' => 'Scooter']);
+        $skateboard = GameType::create(['game_name' => 'Skateboarding', 'is_default' => true]);
+        $rollerskate = GameType::create(['game_name' => 'Roller Skating', 'is_default' => false]);
+        $scooter = GameType::create(['game_name' => 'Scooter', 'is_default' => false]);
 
         // 2. Payment Types
         $cash = PaymentType::create(['name' => 'Cash', 'is_default' => true]);

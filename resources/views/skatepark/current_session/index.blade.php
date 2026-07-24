@@ -78,6 +78,14 @@
         50% { background-color: rgba(239, 68, 68, 0.08); }
         100% { background-color: rgba(239, 68, 68, 0.02); }
     }
+    .payment-alert-bg {
+        background-color: rgba(245, 158, 11, 0.12) !important;
+        border-left: 4px solid #f59e0b !important;
+    }
+    body.dark-mode .payment-alert-bg {
+        background-color: rgba(245, 158, 11, 0.22) !important;
+        border-left: 4px solid #fbbf24 !important;
+    }
     .speaker-btn {
         display: inline-flex;
         align-items: center;
@@ -533,10 +541,9 @@
                 <!-- Stepper -->
                 <div class="d-flex justify-content-between mb-4 text-center">
                     <div class="flex-grow-1 border-bottom border-success border-3 pb-2 text-success fw-bold" id="pkg-step-ind-1">{{ __('1. Player Pkg') }}</div>
-                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-2">{{ __('2. Token') }}</div>
-                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-3">{{ __('3. Duration') }}</div>
-                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-4">{{ __('4. Players') }}</div>
-                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-5">{{ __('5. Save') }}</div>
+                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-2">{{ __('2. Duration') }}</div>
+                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-3">{{ __('3. Players') }}</div>
+                    <div class="flex-grow-1 border-bottom pb-2 text-muted fw-semibold" id="pkg-step-ind-4">{{ __('4. Save') }}</div>
                 </div>
 
                 <!-- STEP 1: ACTIVE PLAYER SELECTION -->
@@ -563,16 +570,8 @@
                     </div>
                 </div>
 
-                <!-- STEP 2: TOKEN SELECTION -->
+                <!-- STEP 2: DURATION SELECTION -->
                 <div id="pkg-step-2" class="d-none">
-                    <h5 class="fw-bold mb-3 text-dark">{{ __('Select Token') }}</h5>
-                    <div class="row g-3" id="pkg-tokens-container">
-                        <!-- Tokens matching selected package game type will be dynamic/filtered -->
-                    </div>
-                </div>
-
-                <!-- STEP 3: DURATION SELECTION -->
-                <div id="pkg-step-3" class="d-none">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0 text-dark">{{ __('Select Duration') }}</h5>
                         <button type="button" class="btn btn-dark fw-bold px-3 py-2" onclick="selectPkgDuration(0, 'No Limit')" style="border-radius: 8px; font-size: 0.9rem;">{{ __('No Limit') }}</button>
@@ -597,8 +596,8 @@
                     </div>
                 </div>
 
-                <!-- STEP 4: PLAYER COUNT SELECTION -->
-                <div id="pkg-step-4" class="d-none">
+                <!-- STEP 3: PLAYER COUNT SELECTION -->
+                <div id="pkg-step-3" class="d-none">
                     <h5 class="fw-bold mb-3 text-dark">{{ __('No. of Players') }}</h5>
                     <div class="row g-2 mb-4">
                         @for($i = 1; $i <= 12; $i++)
@@ -619,23 +618,19 @@
                     </div>
                 </div>
 
-                <!-- STEP 5: SUMMARY & SAVE -->
-                <div id="pkg-step-5" class="d-none">
+                <!-- STEP 4: SUMMARY & SAVE -->
+                <div id="pkg-step-4" class="d-none">
                     <h6 class="fw-bold mb-2 text-dark">{{ __('Package Session Summary') }}</h6>
                     <div class="row mb-2 px-2 py-2 bg-light rounded" style="border-radius: 8px;">
-                        <div class="col-6 col-md-3 mb-2">
+                        <div class="col-6 col-md-4 mb-2">
                             <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Player / Package') }}</span>
                             <span class="fw-bold text-success" style="font-size: 0.88rem;" id="pkg-summary-player">-</span>
                         </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Token') }}</span>
-                            <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="pkg-summary-token">-</span>
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
+                        <div class="col-6 col-md-4 mb-2">
                             <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Time Limit') }}</span>
                             <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="pkg-summary-duration">-</span>
                         </div>
-                        <div class="col-6 col-md-3 mb-2">
+                        <div class="col-6 col-md-4 mb-2">
                             <span class="text-muted d-block text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">{{ __('Players') }}</span>
                             <span class="fw-bold text-dark" style="font-size: 0.88rem;" id="pkg-summary-players">-</span>
                         </div>
@@ -692,7 +687,8 @@
                         <!-- Column 2: Select Token -->
                         <div class="col-md-6">
                             <label for="edit-token-id" class="form-label fw-bold">{{ __('Select Token') }}</label>
-                            <select class="form-select form-select-lg" id="edit-token-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                            <select class="form-select form-select-lg" id="edit-token-id" style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                                <option value="">-- {{ __('No Token (Name Only)') }} --</option>
                                 @foreach($tokens as $t)
                                     <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->gameType->game_name }})</option>
                                 @endforeach
@@ -854,6 +850,8 @@
     const spokenRecords = new Set(); // To prevent repeating Speech Synthesis announcements
     const prefetchedAudio = new Map(); // Pre-buffered audio keyed by tokenName
 
+    const defaultGameType = @json($defaultGameType);
+
     // Add Play Modal Stepper States
     let addStep = 1;
     let addData = {
@@ -862,8 +860,8 @@
         player_package_id: null,
         token_id: null,
         token_name: '',
-        game_type_id: null,
-        game_name: '',
+        game_type_id: defaultGameType ? defaultGameType.id : null,
+        game_name: defaultGameType ? defaultGameType.game_name : '',
         default_time: null, // minutes
         default_time_label: '',
         no_of_players: 1,
@@ -920,6 +918,27 @@
     // Helper: Show Beautiful Bootstrap Confirmation Modal
     function showConfirmModal(options) {
         const modal = $('#dynamicConfirmModal');
+        const modalHeader = modal.find('.modal-header');
+        const modalContent = modal.find('.modal-content');
+        const closeBtn = modalHeader.find('.btn-close');
+
+        // Dynamic theme styling
+        if (options.theme === 'yellow') {
+            if ($('body').hasClass('dark-mode')) {
+                modalHeader.attr('style', 'background-color: #d97706 !important; color: #ffffff !important;');
+                modalContent.attr('style', 'border-radius: 16px; background-color: #1e1912 !important; border: 2px solid #f59e0b !important;');
+                closeBtn.addClass('btn-close-white');
+            } else {
+                modalHeader.attr('style', 'background-color: #f59e0b !important; color: #000000 !important;');
+                modalContent.attr('style', 'border-radius: 16px; background-color: #fffbeb !important; border: 2px solid #f59e0b !important;');
+                closeBtn.removeClass('btn-close-white');
+            }
+        } else {
+            modalHeader.attr('style', '');
+            modalHeader.addClass('bg-dark text-white');
+            modalContent.attr('style', 'border-radius: 16px;');
+            closeBtn.addClass('btn-close-white');
+        }
         
         // Set dynamic texts & icons
         $('#confirm-modal-title').text(options.title || "{{ __('Confirm Action') }}");
@@ -1355,6 +1374,10 @@
             initialTimerText = formatSeconds(record.default_time * 60);
         }
 
+        const isPaymentAlert = record.payment_type && (record.payment_type.is_alert || record.payment_type.is_alert === 1 || record.payment_type.is_alert === true);
+        const alertClass = isPaymentAlert ? 'payment-alert-bg' : '';
+        const paymentLabel = (isPaymentAlert ? '⚠️ ' : '') + (record.payment_type ? record.payment_type.name : 'Unknown');
+
         // Build Edit/Delete vertical stack HTML
         let editDeleteStackHtml = '';
         if (showEdit) {
@@ -1369,7 +1392,7 @@
         }
 
         return `
-            <div class="skate-item d-flex align-items-center justify-content-between gap-1" id="card-${record.id}" data-id="${record.id}" style="min-height: 74px; padding: 0.65rem 0.25rem;">
+            <div class="skate-item d-flex align-items-center justify-content-between gap-1 ${alertClass}" id="card-${record.id}" data-id="${record.id}" style="min-height: 74px; padding: 0.65rem 0.25rem;">
                 <!-- Left: Content Columns (Row 1 + Row 2) -->
                 <div class="flex-grow-1 d-flex flex-column" style="min-width: 0;">
                     <!-- Row 1: Token, Counter -->
@@ -1389,7 +1412,7 @@
                     <!-- Row 2: Horizontal Session Details -->
                     <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 mt-2 text-secondary font-monospace gap-1" style="font-size: 0.82rem;">
                         <span><strong class="text-dark">${record.no_of_players} ${translations.playerCountText}</strong></span>
-                        <span>Rs${record.amount}/${record.payment_type.name}</span>
+                        <span>Rs${record.amount}/${paymentLabel}</span>
                         <span>${translations.limitText}:<strong>${record.default_time ? record.default_time + 'm' : '∞'}</strong></span>
                     </div>
                 </div>
@@ -1554,59 +1577,81 @@
         const record = activeRecords.find(r => r.id === parseInt(recordId));
         if (!record) return;
 
-        const isAmountZero = (parseInt(record.amount) === 0);
+        const isPaymentAlert = record.payment_type && (record.payment_type.is_alert || record.payment_type.is_alert === 1 || record.payment_type.is_alert === true);
 
-        showConfirmModal({
-            title: "{{ __('Stop Session') }}",
-            message: translations.playSessionStopConfirm,
-            icon: '🛑',
-            confirmText: "{{ __('Stop') }}",
-            confirmClass: 'btn-danger',
-            showAmountField: isAmountZero,
-            defaultAmount: 0,
-            onConfirm: function(enteredAmount) {
-                // Optimistic UI: Immediately fade out and remove card from DOM
-                const cardEl = $(`#card-${recordId}`);
-                cardEl.fadeOut(300, function() {
-                    $(this).remove();
-                    
-                    // Recalculate column counters immediately
-                    let countPlaying = $('#playing-list').find('.skate-item').length;
-                    let countOvertime = $('#overtime-list').find('.skate-item').length;
-                    $('#count-playing').text(countPlaying + " " + translations.active);
-                    $('#count-overtime').text(countOvertime + " " + translations.expired);
-                    $('#stat-active').text(countPlaying);
-                    $('#stat-overtime').text(countOvertime);
-                    
-                    if (countPlaying === 0) $('#playing-placeholder').removeClass('d-none');
-                    if (countOvertime === 0) $('#overtime-placeholder').removeClass('d-none');
-                });
+        function proceedToStopModal() {
+            const isAmountZero = (parseInt(record.amount) === 0);
 
-                const postData = { _token: "{{ csrf_token() }}" };
-                if (enteredAmount !== null) {
-                    postData.amount = enteredAmount;
-                }
+            showConfirmModal({
+                title: "{{ __('Stop Session') }}",
+                message: translations.playSessionStopConfirm,
+                icon: '🛑',
+                confirmText: "{{ __('Stop') }}",
+                confirmClass: 'btn-danger',
+                showAmountField: isAmountZero,
+                defaultAmount: 0,
+                onConfirm: function(enteredAmount) {
+                    // Optimistic UI: Immediately fade out and remove card from DOM
+                    const cardEl = $(`#card-${recordId}`);
+                    cardEl.fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Recalculate column counters immediately
+                        let countPlaying = $('#playing-list').find('.skate-item').length;
+                        let countOvertime = $('#overtime-list').find('.skate-item').length;
+                        $('#count-playing').text(countPlaying + " " + translations.active);
+                        $('#count-overtime').text(countOvertime + " " + translations.expired);
+                        $('#stat-active').text(countPlaying);
+                        $('#stat-overtime').text(countOvertime);
+                        
+                        if (countPlaying === 0) $('#playing-placeholder').removeClass('d-none');
+                        if (countOvertime === 0) $('#overtime-placeholder').removeClass('d-none');
+                    });
 
-                $.ajax({
-                    url: `/skatepark/api/play-records/${recordId}/stop`,
-                    type: "POST",
-                    data: postData,
-                    dataType: "json",
-                    success: function(res) {
-                        if (res.success) {
-                            // Update local activeRecords array state immediately
-                            activeRecords = activeRecords.filter(r => r.id !== parseInt(recordId));
+                    const postData = { _token: "{{ csrf_token() }}" };
+                    if (enteredAmount !== null) {
+                        postData.amount = enteredAmount;
+                    }
+
+                    $.ajax({
+                        url: `/skatepark/api/play-records/${recordId}/stop`,
+                        type: "POST",
+                        data: postData,
+                        dataType: "json",
+                        success: function(res) {
+                            if (res.success) {
+                                // Update local activeRecords array state immediately
+                                activeRecords = activeRecords.filter(r => r.id !== parseInt(recordId));
+                                refreshSessionList();
+                            }
+                        },
+                        error: function(err) {
+                            alert(err.responseJSON ? err.responseJSON.message : "Error stopping session");
+                            // If the AJAX call fails, refresh the list to restore the card
                             refreshSessionList();
                         }
-                    },
-                    error: function(err) {
-                        alert(err.responseJSON ? err.responseJSON.message : "Error stopping session");
-                        // If the AJAX call fails, refresh the list to restore the card
-                        refreshSessionList();
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
+
+        if (isPaymentAlert) {
+            const paymentName = record.payment_type ? record.payment_type.name : '';
+            showConfirmModal({
+                title: "{{ __('Unpaid / Alert Payment Check') }}",
+                message: `Rs. ${record.amount} {{ __('is unpaid') }} (${paymentName}). {{ __('Did they pay?') }}`,
+                icon: '⚠️',
+                theme: 'yellow',
+                confirmText: "{{ __('Yes, Paid') }}",
+                confirmClass: 'btn-warning text-dark fw-bold',
+                showAmountField: false,
+                onConfirm: function() {
+                    setTimeout(proceedToStopModal, 300);
+                }
+            });
+        } else {
+            proceedToStopModal();
+        }
     }
 
     function deletePlayRecord(recordId) {
@@ -1688,9 +1733,13 @@
         addData.name = playerName;
         addData.token_id = null;
         addData.token_name = null;
-        // game_type_id and game_name remain null/empty since no token is selected
-        addData.game_type_id = null;
-        addData.game_name = '';
+        if (defaultGameType) {
+            addData.game_type_id = defaultGameType.id;
+            addData.game_name = defaultGameType.game_name;
+        } else {
+            addData.game_type_id = null;
+            addData.game_name = '';
+        }
 
         // Progress to Step 2
         addStep = 2;
@@ -1815,6 +1864,7 @@
                 player_type: addData.player_type,
                 player_package_id: addData.player_package_id,
                 token_id: addData.token_id,
+                game_type_id: addData.game_type_id,
                 default_time: addData.default_time,
                 no_of_players: addData.no_of_players,
                 amount: addData.amount,
@@ -1859,8 +1909,8 @@
             player_package_id: null,
             token_id: null,
             token_name: '',
-            game_type_id: null,
-            game_name: '',
+            game_type_id: defaultGameType ? defaultGameType.id : null,
+            game_name: defaultGameType ? defaultGameType.game_name : '',
             default_time: null,
             default_time_label: '',
             no_of_players: 1,
@@ -1878,34 +1928,10 @@
         pkgData.player_name = playerName;
         pkgData.game_type_id = gameTypeId;
         pkgData.game_name = gameName;
+        pkgData.token_id = null;
+        pkgData.token_name = '';
 
-        // Render matching tokens in Step 2 grid
-        const tokensContainer = $('#pkg-tokens-container');
-        tokensContainer.empty();
-
-        const usedTokenIds = new Set(activeRecords.map(r => r.token_id));
-        const filteredTokens = masterTokens.filter(t => t.game_type_id === gameTypeId && t.is_active && !usedTokenIds.has(t.id));
-
-        filteredTokens.forEach((t, index) => {
-            const colClass = index < 2 ? 'col-md-6 col-6' : 'col-md-2 col-4';
-            tokensContainer.append(`
-                <div class="${colClass} mb-2">
-                    <button type="button" class="btn btn-outline-success w-100 py-1 px-0.5 fw-bold" onclick="selectPkgToken(${t.id}, '${t.name}')" style="border-radius: 8px; font-size: 1.15rem; min-height: 36px; display: flex; align-items: center; justify-content: center; padding-top: 0.15rem; padding-bottom: 0.15rem;">
-                        ${t.name}
-                    </button>
-                </div>
-            `);
-        });
-
-        if (filteredTokens.length === 0) {
-            tokensContainer.append(`
-                <div class="text-center py-4 text-muted col-12">
-                    No active tokens available for ${gameName} (all tokens are currently in use!).
-                </div>
-            `);
-        }
-
-        // Progress to Step 2
+        // Progress directly to Step 2 (Duration)
         pkgStep = 2;
         $('#pkg-step-1').addClass('d-none');
         $('#pkg-step-2').removeClass('d-none');
@@ -1914,28 +1940,16 @@
         $('#btn-pkg-back').removeAttr('disabled');
     }
 
-    function selectPkgToken(id, name) {
-        pkgData.token_id = id;
-        pkgData.token_name = name;
+    function selectPkgDuration(minutes, label) {
+        pkgData.default_time = minutes;
+        pkgData.default_time_label = label;
 
-        // Progress to Step 3
+        // Progress to Step 3 (Players)
         pkgStep = 3;
         $('#pkg-step-2').addClass('d-none');
         $('#pkg-step-3').removeClass('d-none');
         $('#pkg-step-ind-2').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
         $('#pkg-step-ind-3').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
-    }
-
-    function selectPkgDuration(minutes, label) {
-        pkgData.default_time = minutes;
-        pkgData.default_time_label = label;
-
-        // Progress to Step 4
-        pkgStep = 4;
-        $('#pkg-step-3').addClass('d-none');
-        $('#pkg-step-4').removeClass('d-none');
-        $('#pkg-step-ind-3').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
-        $('#pkg-step-ind-4').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
     }
 
     function submitPkgCustomDuration() {
@@ -1962,20 +1976,19 @@
     }
 
     function proceedToPkgSummary() {
-        $('#pkg-summary-player').text(pkgData.player_name + " (" + "{{ __('Package') }}" + ")");
-        $('#pkg-summary-token').text(pkgData.token_name + " (" + pkgData.game_name + ")");
+        $('#pkg-summary-player').text(pkgData.player_name + " (" + pkgData.game_name + ")");
         $('#pkg-summary-duration').text(pkgData.default_time === 0 ? "{{ __('Unlimited (Count Up)') }}" : pkgData.default_time + ' ' + "{{ __('Minutes') }}");
         $('#pkg-summary-players').text(pkgData.no_of_players + ' ' + "{{ __('Players') }}");
 
         // Amount is locked to 0 for Packages
         pkgData.amount = 0;
 
-        // Progress to Step 5
-        pkgStep = 5;
-        $('#pkg-step-4').addClass('d-none');
-        $('#pkg-step-5').removeClass('d-none');
-        $('#pkg-step-ind-4').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
-        $('#pkg-step-ind-5').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
+        // Progress to Step 4 (Save)
+        pkgStep = 4;
+        $('#pkg-step-3').addClass('d-none');
+        $('#pkg-step-4').removeClass('d-none');
+        $('#pkg-step-ind-3').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
+        $('#pkg-step-ind-4').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
         $('#btn-pkg-submit').removeClass('d-none');
     }
 
@@ -1999,12 +2012,6 @@
             $('#pkg-step-3').removeClass('d-none');
             $('#pkg-step-ind-4').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
             $('#pkg-step-ind-3').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
-        } else if (pkgStep === 5) {
-            pkgStep = 4;
-            $('#pkg-step-5').addClass('d-none');
-            $('#pkg-step-4').removeClass('d-none');
-            $('#pkg-step-ind-5').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
-            $('#pkg-step-ind-4').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
             $('#btn-pkg-submit').addClass('d-none');
         }
     }
@@ -2017,7 +2024,8 @@
                 _token: "{{ csrf_token() }}",
                 player_type: pkgData.player_type,
                 player_package_id: pkgData.player_package_id,
-                token_id: pkgData.token_id,
+                token_id: null,
+                game_type_id: pkgData.game_type_id,
                 default_time: pkgData.default_time,
                 no_of_players: pkgData.no_of_players,
                 amount: 0, // Enforced 0
@@ -2043,13 +2051,11 @@
         $('#pkg-step-2').addClass('d-none');
         $('#pkg-step-3').addClass('d-none');
         $('#pkg-step-4').addClass('d-none');
-        $('#pkg-step-5').addClass('d-none');
         
         $('#pkg-step-ind-1').addClass('text-success border-success border-3 fw-bold').removeClass('text-muted fw-semibold');
         $('#pkg-step-ind-2').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
         $('#pkg-step-ind-3').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
         $('#pkg-step-ind-4').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
-        $('#pkg-step-ind-5').removeClass('text-success border-success border-3 fw-bold').addClass('text-muted fw-semibold');
         
         $('#btn-pkg-back').attr('disabled', 'disabled');
         $('#btn-pkg-submit').addClass('d-none');
@@ -2094,7 +2100,7 @@
         if (!record) return;
 
         $('#edit-record-id').val(record.id);
-        $('#edit-token-id').val(record.token_id);
+        $('#edit-token-id').val(record.token_id || '');
         $('#edit-default-time').val(record.default_time || 0);
         $('#edit-players').val(record.no_of_players);
         selectEditPayment(record.payment_type_id);
@@ -2132,7 +2138,7 @@
         const payload = {
             _token: "{{ csrf_token() }}",
             name: $('#edit-name').val(),
-            token_id: $('#edit-token-id').val(),
+            token_id: $('#edit-token-id').val() || null,
             default_time: $('#edit-default-time').val(),
             no_of_players: $('#edit-players').val(),
             amount: $('#edit-amount').val(),
