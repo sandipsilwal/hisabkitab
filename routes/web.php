@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
         Route::post('api/play-records/{playRecord}/delete', [CurrentSessionController::class, 'deletePlayRecord'])->name('skatepark.api.delete-play-record');
         Route::get('api/rates/lookup', [CurrentSessionController::class, 'lookupRate'])->name('skatepark.api.lookup-rate');
         Route::get('api/tts', [CurrentSessionController::class, 'tts'])->name('skatepark.api.tts');
+        Route::get('api/daily-total', [CurrentSessionController::class, 'dailyTotal'])->name('skatepark.api.daily-total');
 
         // Reports
         Route::get('reports', [CurrentSessionController::class, 'report'])->name('skatepark.reports');

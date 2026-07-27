@@ -376,23 +376,42 @@
                 </div>
             </div>
         @endforeach
+    @endif
 
-        {{-- Grand Total card --}}
-        <div class="col-6 col-md-4 col-lg-2">
-            <div class="card report-summary-card h-100 p-3" style="background: #0f172a; border: 1.5px solid #334155 !important;">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="card-icon" style="background: rgba(234, 179, 8, 0.15); font-size: 1.3rem;">💰</div>
-                    <span class="stat-label" style="color: #eab308;">{{ __('Total') }}</span>
-                </div>
-                <div class="stat-value" style="color: #fef3c7; font-size: 1.35rem;">Rs. {{ number_format($normalRevenue) }}</div>
-                <div class="d-flex align-items-center gap-1 mt-auto pt-2" style="font-size: 0.68rem; color: #94a3b8;">
-                    <span>{{ $normalCount }} {{ __('sessions') }}</span>
-                    <span class="ms-auto fw-bold" style="color: #eab308;">100%</span>
-                </div>
-                <div class="mt-1" style="height: 4px; background: #334155; border-radius: 10px;"></div>
+    {{-- Package Payments Card --}}
+    @if($packagePaymentsTotal > 0)
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card report-summary-card h-100 p-3" style="background: #fdf4ff; border: 1.5px solid #f0abfc !important;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="card-icon" style="background: #fae8ff; font-size: 1.3rem;">🎁</div>
+                <span class="stat-label" style="color: #a21caf;">{{ __('Packages') }}</span>
+            </div>
+            <div class="stat-value" style="color: #86198f; font-size: 1.35rem;">Rs. {{ number_format($packagePaymentsTotal) }}</div>
+            <div class="d-flex align-items-center gap-1 mt-auto pt-2" style="font-size: 0.68rem; color: #a21caf;">
+                <span>{{ $packagePayments->count() }} {{ __('payments') }}</span>
+            </div>
+            <div class="mt-1" style="height: 4px; background: rgba(0,0,0,0.06); border-radius: 10px;">
+                <div style="width: 100%; height: 100%; background: #d946ef; border-radius: 10px;"></div>
             </div>
         </div>
+    </div>
     @endif
+
+    {{-- Grand Total card --}}
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card report-summary-card h-100 p-3" style="background: #0f172a; border: 1.5px solid #334155 !important;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="card-icon" style="background: rgba(234, 179, 8, 0.15); font-size: 1.3rem;">💰</div>
+                <span class="stat-label" style="color: #eab308;">{{ __('Total') }}</span>
+            </div>
+            <div class="stat-value" style="color: #fef3c7; font-size: 1.35rem;">Rs. {{ number_format($totalRevenue) }}</div>
+            <div class="d-flex align-items-center gap-1 mt-auto pt-2" style="font-size: 0.68rem; color: #94a3b8;">
+                <span>{{ __('Revenue') }}</span>
+                <span class="ms-auto fw-bold" style="color: #eab308;">100%</span>
+            </div>
+            <div class="mt-1" style="height: 4px; background: #334155; border-radius: 10px;"></div>
+        </div>
+    </div>
 </div>
 
 

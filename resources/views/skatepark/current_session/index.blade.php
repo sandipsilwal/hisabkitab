@@ -799,7 +799,10 @@
                 <div class="row align-items-end mb-2">
                     <!-- Left Half: Date (BS) -->
                     <div class="col-md-6 col-12 mb-3 mb-md-0">
-                        <label for="txn-date-bs" class="form-label fw-bold mb-1" style="font-size: 0.85rem;">{{ __('Date (BS)') }}</label>
+                        <label for="txn-date-bs" class="form-label fw-bold mb-1" style="font-size: 0.85rem;">
+                            {{ __('Date (BS)') }} 
+                            <span id="txn-daily-total-display" class="badge bg-success bg-opacity-10 text-success ms-2 d-none" style="font-size: 0.75rem;"></span>
+                        </label>
                         <input type="text" class="form-control nepali-datepicker default-today-date" id="txn-date-bs" name="date_bs"
                                placeholder="YYYY-MM-DD" autocomplete="off"
                                style="border-radius: 8px; font-size: 0.95rem; height: 38px;" required>
@@ -2314,6 +2317,28 @@
             return '';
         }
 
+        function fetchDailyTotal(dateBS) {
+            if (!dateBS) return;
+            var displayEl = document.getElementById('txn-daily-total-display');
+            displayEl.classList.remove('d-none');
+            displayEl.textContent = '...';
+            
+            $.ajax({
+                url: "{{ route('skatepark.api.daily-total') }}",
+                data: { date_bs: dateBS },
+                success: function(res) {
+                    if (res.total !== undefined) {
+                        displayEl.textContent = "Total: Rs. " + Number(res.total).toFixed(2);
+                    } else {
+                        displayEl.textContent = "Error";
+                    }
+                },
+                error: function() {
+                    displayEl.textContent = "Error";
+                }
+            });
+        }
+
         var txnModal = document.getElementById('addTransactionModal');
 
         txnModal.addEventListener('shown.bs.modal', function() {
@@ -2323,11 +2348,18 @@
             var dateInput = document.getElementById('txn-date-bs');
             if (dateInput) {
                 dateInput.value = todayBS;
+                fetchDailyTotal(todayBS);
             }
+        });
+        
+        // Listen to change event on the date input
+        $('#txn-date-bs').on('change blur dateSelect', function() {
+            fetchDailyTotal(this.value);
         });
 
         txnModal.addEventListener('hidden.bs.modal', function() {
             initTxnModal();
+            document.getElementById('txn-daily-total-display').classList.add('d-none');
         });
     });
 </script>

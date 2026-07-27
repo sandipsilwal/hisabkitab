@@ -32,12 +32,13 @@ class PlayerPackageController extends Controller
     public function update(Request $request, PlayerPackage $playerPackage)
     {
         $request->validate([
+            'package_id' => 'required|exists:packages,id',
             'total_amount' => 'required|integer|min:0',
             'package_status' => 'required|in:not played,started,completed',
             'remarks' => 'nullable|string',
         ]);
 
-        $playerPackage->update($request->only(['total_amount', 'package_status', 'remarks']));
+        $playerPackage->update($request->only(['package_id', 'total_amount', 'package_status', 'remarks']));
 
         return redirect()->route('players.show', $playerPackage->player_id)->with('success', 'Player package updated successfully.');
     }

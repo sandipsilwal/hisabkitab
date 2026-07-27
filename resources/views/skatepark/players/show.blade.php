@@ -357,8 +357,20 @@
                     @method('PUT')
                     <div class="modal-body p-4">
                         <div class="mb-3">
+                            <label class="form-label fw-semibold">Select Subscription Package</label>
+                            <select class="form-select" name="package_id" required style="border-radius: 8px;" onchange="document.getElementById('edit_modal_total_amount_{{ $playerPkg->id }}').value = this.options[this.selectedIndex].getAttribute('data-amount') || ''">
+                                <option value="" disabled>-- Select Subscription --</option>
+                                @foreach($packages as $pkg)
+                                    <option value="{{ $pkg->id }}" data-amount="{{ $pkg->amount }}" {{ $playerPkg->package_id == $pkg->id ? 'selected' : '' }}>
+                                        {{ $pkg->gameType->game_name }} ({{ $pkg->time_per_day }} min/day - {{ $pkg->no_of_days }} Days) - Rs. {{ number_format($pkg->amount) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">Package Total Price (Rs.)</label>
-                            <input type="number" class="form-control" name="total_amount" value="{{ $playerPkg->total_amount }}" required min="0" style="border-radius: 8px;">
+                            <input type="number" class="form-control" id="edit_modal_total_amount_{{ $playerPkg->id }}" name="total_amount" value="{{ $playerPkg->total_amount }}" required min="0" style="border-radius: 8px;">
                         </div>
                         
                         <div class="mb-3">

@@ -377,14 +377,22 @@ class CurrentSessionController extends Controller
             ->orderBy('end_time', 'desc')
             ->get();
 
+        // Package Payments
+        $packagePayments = \App\Models\PlayerPackagePaymentHistory::with('playerPackage.player')
+            ->whereBetween('date', [$fromDt, $toDt])
+            ->orderBy('date', 'desc')
+            ->get();
+        $packagePaymentsTotal = $packagePayments->sum('amount');
+
         // Summary aggregates
-        $totalRevenue     = $records->sum('amount');
         $totalSessions    = $records->count();
         $totalPlayers     = $records->sum('no_of_players');
         $totalMinutes     = $records->sum('actual_time');
         $normalCount      = $records->where('player_type', 'normal')->count();
         $packageCount     = $records->where('player_type', 'package')->count();
         $normalRevenue    = $records->where('player_type', 'normal')->sum('amount');
+        
+        $totalRevenue     = $normalRevenue + $packagePaymentsTotal;
 
         // Revenue breakdown by payment type
         $paymentBreakdown = $records
@@ -394,6 +402,8 @@ class CurrentSessionController extends Controller
 
         return view('skatepark.reports.index', compact(
             'records',
+            'packagePayments',
+            'packagePaymentsTotal',
             'from',
             'to',
             'totalRevenue',
@@ -444,6 +454,35 @@ class CurrentSessionController extends Controller
                 ->header('Access-Control-Allow-Origin', '*');
         } catch (\Exception $e) {
             abort(503, 'TTS fetch failed: ' . $e->getMessage());
+        }
+    }
+
+    public function dailyTotal(Request $request)
+    {
+        $date_bs = $request->query('date_bs');
+        if (!$date_bs) {
+            return response()->json(['total' => 0]);
+        }
+
+        try {
+            $date_ad = new \DateTime(\Anuzpandey\LaravelNepaliDate\LaravelNepaliDate::from($date_bs)->toEnglishDate());
+            $dt = \Carbon\Carbon::instance($date_ad);
+            $fromDt = $dt->copy()->startOfDay();
+            $toDt   = $dt->copy()->endOfDay();
+
+            $normalRevenue = PlayRecord::whereNotNull('end_time')
+                ->whereBetween('end_time', [$fromDt, $toDt])
+                ->where('player_type', 'normal')
+                ->sum('amount');
+                
+            $packagePaymentsTotal = \App\Models\PlayerPackagePaymentHistory::whereBetween('date', [$fromDt, $toDt])
+                ->sum('amount');
+
+            return response()->json([
+                'total' => $normalRevenue + $packagePaymentsTotal
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['total' => 0, 'error' => $e->getMessage()]);
         }
     }
 }
