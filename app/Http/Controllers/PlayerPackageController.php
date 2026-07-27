@@ -43,12 +43,19 @@ class PlayerPackageController extends Controller
         return redirect()->route('players.show', $playerPackage->player_id)->with('success', 'Player package updated successfully.');
     }
 
-    public function destroy(PlayerPackage $playerPackage)
+    public function destroy(Request $request, PlayerPackage $playerPackage)
     {
         $playerId = $playerPackage->player_id;
+        
         if ($playerPackage->payments()->exists() || $playerPackage->playRecords()->exists()) {
-            return redirect()->route('players.show', $playerId)->with('error', 'Cannot delete player package because it has associated payments or play sessions.');
+            if ($request->input('delete_password') !== date('dmY')) {
+                return redirect()->route('players.show', $playerId)->with('error', 'Cannot delete player package because it has associated payments or play sessions. Provide the correct password to force delete.');
+            }
+            
+            $playerPackage->payments()->delete();
+            $playerPackage->playRecords()->delete();
         }
+        
         $playerPackage->delete();
 
         return redirect()->route('players.show', $playerId)->with('success', 'Player package removed successfully.');

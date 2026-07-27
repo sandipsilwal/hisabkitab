@@ -59,11 +59,20 @@ class PlayerController extends Controller
         return redirect()->route('players.index')->with('success', 'Player updated successfully.');
     }
 
-    public function destroy(Player $player)
+    public function destroy(Request $request, Player $player)
     {
         if ($player->playerPackages()->exists()) {
-            return back()->with('error', 'Cannot delete Player because they have purchased packages.');
+            if ($request->input('delete_password') !== date('dmY')) {
+                return back()->with('error', 'Cannot delete Player because they have purchased packages. Provide the correct password to force delete.');
+            }
+            
+            foreach ($player->playerPackages as $pkg) {
+                $pkg->payments()->delete();
+                $pkg->playRecords()->delete();
+                $pkg->delete();
+            }
         }
+        
         $player->delete();
         return redirect()->route('players.index')->with('success', 'Player deleted successfully.');
     }

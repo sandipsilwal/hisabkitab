@@ -40,7 +40,7 @@
                                 <button type="button" class="btn btn-outline-warning btn-sm me-1" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ $player->id }}">
                                     {{ __('Edit') }}
                                 </button>
-                                <form action="{{ route('players.destroy', $player->id) }}" method="POST" class="d-inline" onsubmit="confirmDeletePlayer(event, this)">
+                                <form action="{{ route('players.destroy', $player->id) }}" method="POST" class="d-inline" onsubmit="confirmDeletePlayer(event, this, {{ $player->playerPackages()->exists() ? 'true' : 'false' }})">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;">
@@ -147,10 +147,16 @@
             <div class="modal-body p-4">
                 <div class="d-flex align-items-start gap-3">
                     <span class="fs-2">🗑️</span>
-                    <div>
+                    <div style="flex-grow: 1;">
                         <p class="mb-0 text-dark fw-medium" style="font-size: 0.95rem;">
                             {{ __('Are you sure you want to delete this player? All linked packages and payments will also be deleted.') }}
                         </p>
+                        
+                        <div id="delete-player-password-container" class="mt-3 d-none">
+                            <label for="delete_player_password_input" class="form-label fw-bold text-danger mb-1" style="font-size: 0.85rem;">{{ __('Password') }}</label>
+                            <input type="password" class="form-control" id="delete_player_password_input" name="delete_password" placeholder="{{ __('Enter password') }}" style="border-radius: 8px;">
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ __('Password is required because this player has active packages.') }}</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -165,9 +171,27 @@
 <script>
 let formToSubmit = null;
 
-function confirmDeletePlayer(event, form) {
+function confirmDeletePlayer(event, form, requirePassword = false) {
     event.preventDefault();
     formToSubmit = form;
+    
+    const pwdContainer = document.getElementById('delete-player-password-container');
+    const pwdInput = document.getElementById('delete_player_password_input');
+    
+    // Ensure any existing password input in the form is removed first to avoid duplicates
+    const existingHiddenPwd = formToSubmit.querySelector('input[name="delete_password"]');
+    if (existingHiddenPwd) existingHiddenPwd.remove();
+    
+    if (requirePassword) {
+        pwdContainer.classList.remove('d-none');
+        pwdInput.value = '';
+        pwdInput.required = true;
+    } else {
+        pwdContainer.classList.add('d-none');
+        pwdInput.value = '';
+        pwdInput.required = false;
+    }
+    
     const modalEl = document.getElementById('deletePlayerConfirmModal');
     const deleteModal = new bootstrap.Modal(modalEl);
     deleteModal.show();
@@ -175,6 +199,23 @@ function confirmDeletePlayer(event, form) {
 
 function submitDeleteForm() {
     if (formToSubmit) {
+        const pwdContainer = document.getElementById('delete-player-password-container');
+        const pwdInput = document.getElementById('delete_player_password_input');
+        
+        if (!pwdContainer.classList.contains('d-none')) {
+            if (!pwdInput.value.trim()) {
+                alert("{{ __('Please enter the force delete password.') }}");
+                pwdInput.focus();
+                return;
+            }
+            // Append password to form
+            let hiddenPwd = document.createElement('input');
+            hiddenPwd.type = 'hidden';
+            hiddenPwd.name = 'delete_password';
+            hiddenPwd.value = pwdInput.value;
+            formToSubmit.appendChild(hiddenPwd);
+        }
+        
         formToSubmit.submit();
     }
 }
