@@ -768,42 +768,58 @@
      MODAL: ADD EXTRA
      ============================================== -->
 <div class="modal fade" id="addExtraModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4" style="max-width: 500px;">
+    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4 modal-lg">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-dark text-white py-3">
                 <h5 class="modal-title fw-bold">{{ __('Add Extra to Play Session') }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="add-extra-form" onsubmit="submitAddExtra(event)">
-                <input type="hidden" id="add-extra-record-id">
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label for="add-extra-id" class="form-label fw-bold">{{ __('Select Extra') }}</label>
-                        <select class="form-select form-select-lg" id="add-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
-                            <option value="">-- {{ __('Select Item') }} --</option>
-                            @foreach($extras as $extra)
-                                <option value="{{ $extra->id }}">{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
-                            @endforeach
-                        </select>
+            <div class="modal-body p-4">
+                <div class="row">
+                    <!-- Left Column: Form -->
+                    <div class="col-md-6 border-end-md pe-md-4">
+                        <form id="add-extra-form" onsubmit="submitAddExtra(event)">
+                            <input type="hidden" id="add-extra-record-id">
+                            <div class="mb-3">
+                                <label for="add-extra-id" class="form-label fw-bold">{{ __('Select Extra') }}</label>
+                                <select class="form-select form-select-lg" id="add-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;" onchange="calculateExtraTotal()">
+                                    <option value="" data-amount="0">-- {{ __('Select Item') }} --</option>
+                                    @foreach($extras as $extra)
+                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}">{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="add-extra-quantity" class="form-label fw-bold">{{ __('Quantity') }}</label>
+                                <input type="number" class="form-control form-control-lg" id="add-extra-quantity" required min="1" value="1" style="border-radius: 8px; font-size: 0.9rem; height: 42px;" oninput="calculateExtraTotal()">
+                            </div>
+                            <div class="mb-3">
+                                <label for="add-extra-total" class="form-label fw-bold">{{ __('Total Amount (Rs.)') }}</label>
+                                <input type="number" class="form-control form-control-lg fw-bold" id="add-extra-total" readonly value="0.00" style="border-radius: 8px; font-size: 0.9rem; height: 42px; background-color: #f8fafc; color: #1e293b;">
+                            </div>
+                            <div class="mb-3">
+                                <label for="add-extra-payment-type" class="form-label fw-bold">{{ __('Payment Type') }}</label>
+                                <select class="form-select form-select-lg" id="add-extra-payment-type" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                                    @foreach($paymentTypes as $pt)
+                                        <option value="{{ $pt->id }}" {{ strtolower($pt->name) == 'not paid' || strtolower($pt->name) == 'unpaid' ? 'selected' : '' }}>{{ $pt->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary fw-semibold" style="border-radius: 8px; height: 42px;">✓ {{ __('Add Extra') }}</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <label for="add-extra-quantity" class="form-label fw-bold">{{ __('Quantity') }}</label>
-                        <input type="number" class="form-control form-control-lg" id="add-extra-quantity" required min="1" value="1" style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
-                    </div>
-                    <div class="mb-3">
-                        <label for="add-extra-payment-type" class="form-label fw-bold">{{ __('Payment Type') }}</label>
-                        <select class="form-select form-select-lg" id="add-extra-payment-type" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
-                            @foreach($paymentTypes as $pt)
-                                <option value="{{ $pt->id }}" {{ $defaultPaymentType && $defaultPaymentType->id == $pt->id ? 'selected' : '' }}>{{ $pt->name }}</option>
-                            @endforeach
-                        </select>
+                    
+                    <!-- Right Column: Existing Extras -->
+                    <div class="col-md-6 ps-md-4 mt-4 mt-md-0">
+                        <h6 class="fw-bold mb-3 pb-2 border-bottom">{{ __('Existing Extras') }}</h6>
+                        <div id="existing-extras-list" class="d-flex flex-column gap-2" style="max-height: 350px; overflow-y: auto; padding-right: 4px;">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary fw-semibold" style="border-radius: 8px;" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                    <button type="submit" class="btn btn-primary fw-semibold" style="border-radius: 8px;">✓ {{ __('Add Extra') }}</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1719,9 +1735,57 @@
         }
     }
 
+    function calculateExtraTotal() {
+        const select = document.getElementById('add-extra-id');
+        const quantity = parseInt(document.getElementById('add-extra-quantity').value) || 0;
+        
+        let amount = 0;
+        if (select.selectedIndex >= 0) {
+            const option = select.options[select.selectedIndex];
+            amount = parseFloat(option.getAttribute('data-amount')) || 0;
+        }
+        
+        const total = amount * quantity;
+        document.getElementById('add-extra-total').value = total.toFixed(2);
+    }
+
     function openAddExtraModal(recordId) {
         document.getElementById('add-extra-record-id').value = recordId;
         document.getElementById('add-extra-form').reset();
+        document.getElementById('add-extra-total').value = '0.00';
+        
+        const record = activeRecords.find(r => r.id === parseInt(recordId));
+        const listContainer = document.getElementById('existing-extras-list');
+        listContainer.innerHTML = '';
+        
+        if (record && record.play_record_extras && record.play_record_extras.length > 0) {
+            record.play_record_extras.forEach(extra => {
+                const itemName = extra.extra ? extra.extra.title : 'Unknown Item';
+                const statusBadge = extra.status === 'Paid' 
+                    ? '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">Paid</span>' 
+                    : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">Not Paid</span>';
+                
+                const itemHtml = `
+                    <div class="p-2 border rounded d-flex justify-content-between align-items-center" style="background-color: #f8fafc;">
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">${itemName} <span class="text-secondary fw-normal">x ${extra.quantity}</span></div>
+                            <div class="text-muted fw-bold" style="font-size: 0.8rem;">Rs. ${extra.total_amount}</div>
+                        </div>
+                        <div>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        } else {
+            listContainer.innerHTML = `
+                <div class="text-center py-5 text-muted bg-light rounded border" style="font-size: 0.85rem;">
+                    <em>{{ __('No extras added yet.') }}</em>
+                </div>
+            `;
+        }
+        
         var addExtraModal = new bootstrap.Modal(document.getElementById('addExtraModal'));
         addExtraModal.show();
     }
