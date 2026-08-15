@@ -1433,15 +1433,10 @@
                 <div class="d-flex flex-column edit-delete-stack-${record.id}" style="width: 68px; gap: 4px;">
                     <button class="btn btn-outline-warning btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openEditModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">${translations.editText}</button>
                     <button class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="deletePlayRecord(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">${translations.deleteText}</button>
-                    <button class="btn btn-outline-info btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openAddExtraModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">+ Extra</button>
                 </div>
             `;
         } else {
-            editDeleteStackHtml = `
-                <div class="d-flex flex-column edit-delete-stack-${record.id}" style="width: 68px; gap: 4px;">
-                    <button class="btn btn-outline-info btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openAddExtraModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">+ Extra</button>
-                </div>
-            `;
+            editDeleteStackHtml = `<div style="width: 68px;"></div>`;
         }
 
         return `
@@ -1453,6 +1448,7 @@
                         <!-- Left: Token / Player Name -->
                         <div class="d-flex align-items-center gap-1" style="flex-shrink: 0; min-width: 60px; max-width: 100%; word-break: break-word;">
                             <span class="badge-token text-dark" style="font-size: 1.15rem; font-weight: 800;" title="Token: ${tokenName}">${badgeText}</span>
+                            <button class="btn btn-outline-info btn-sm fw-bold px-2 py-0 ms-1" onclick="openAddExtraModal(${record.id})" style="font-size: 0.7rem; border-radius: 6px; height: 22px; line-height: 1; border-width: 1.5px;">+ Extra</button>
                         </div>
                         
                         <!-- Middle: Timer Counter -->
