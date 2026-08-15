@@ -28,7 +28,14 @@ class ExtraController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
 
-        Extra::create($request->all());
+        $data = $request->all();
+        $data['is_default'] = $request->has('is_default');
+
+        if ($data['is_default']) {
+            Extra::where('id', '>', 0)->update(['is_default' => false]);
+        }
+
+        Extra::create($data);
         return redirect()->route('extras.index')->with('success', 'Extra created successfully.');
     }
 
@@ -49,7 +56,14 @@ class ExtraController extends Controller
             'amount' => 'required|numeric|min:0',
         ]);
 
-        $extra->update($request->all());
+        $data = $request->all();
+        $data['is_default'] = $request->has('is_default');
+
+        if ($data['is_default']) {
+            Extra::where('id', '!=', $extra->id)->update(['is_default' => false]);
+        }
+
+        $extra->update($data);
         return redirect()->route('extras.index')->with('success', 'Extra updated successfully.');
     }
 

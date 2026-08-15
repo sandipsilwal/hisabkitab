@@ -785,7 +785,7 @@
                                 <select class="form-select form-select-lg" id="add-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;" onchange="calculateExtraTotal()">
                                     <option value="" data-amount="0">-- {{ __('Select Item') }} --</option>
                                     @foreach($extras as $extra)
-                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}">{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->is_default ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -1643,6 +1643,7 @@
         if (!record) return;
 
         const isPaymentAlert = record.payment_type && (record.payment_type.is_alert || record.payment_type.is_alert === 1 || record.payment_type.is_alert === true);
+        const hasUnpaidExtras = record.play_record_extras && record.play_record_extras.some(e => e.status === 'Not Paid');
 
         function proceedToStopModal() {
             const isAmountZero = (parseInt(record.amount) === 0);
@@ -1752,7 +1753,9 @@
     function openAddExtraModal(recordId) {
         document.getElementById('add-extra-record-id').value = recordId;
         document.getElementById('add-extra-form').reset();
-        document.getElementById('add-extra-total').value = '0.00';
+        
+        // Let it calculate based on the default selected item
+        calculateExtraTotal();
         
         const record = activeRecords.find(r => r.id === parseInt(recordId));
         const listContainer = document.getElementById('existing-extras-list');

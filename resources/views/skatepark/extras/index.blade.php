@@ -23,7 +23,12 @@
                     @forelse($extras as $extra)
                         <tr>
                             <td class="ps-4 text-start font-monospace text-muted">{{ $extra->id }}</td>
-                            <td class="text-start fw-bold text-dark">{{ $extra->title }}</td>
+                            <td class="text-start fw-bold text-dark">
+                                {{ $extra->title }}
+                                @if($extra->is_default)
+                                    <span class="badge bg-primary ms-2">{{ __('Default') }}</span>
+                                @endif
+                            </td>
                             <td class="text-start text-dark">Rs. {{ number_format($extra->amount) }}</td>
                             <td class="pe-4 text-end">
                                 <button type="button" class="btn btn-outline-warning btn-sm me-1" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#editExtraModal{{ $extra->id }}">
@@ -71,6 +76,10 @@
                         <label for="add-amount" class="form-label fw-semibold">{{ __('Amount (Rs.)') }}</label>
                         <input type="number" class="form-control" id="add-amount" name="amount" placeholder="{{ __('e.g. 50') }}" value="{{ old('amount') }}" required min="0" style="border-radius: 8px;">
                     </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="add-is-default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold" for="add-is-default">{{ __('Selected by Default') }}</label>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary fw-semibold px-4" style="border-radius: 8px;" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
@@ -101,6 +110,10 @@
                     <div class="mb-3">
                         <label for="edit-amount-{{ $extra->id }}" class="form-label fw-semibold">{{ __('Amount (Rs.)') }}</label>
                         <input type="number" class="form-control" id="edit-amount-{{ $extra->id }}" name="amount" value="{{ old('amount', $extra->amount) }}" required min="0" style="border-radius: 8px;">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-is-default-{{ $extra->id }}" name="is_default" value="1" {{ old('is_default', $extra->is_default) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold" for="edit-is-default-{{ $extra->id }}">{{ __('Selected by Default') }}</label>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">

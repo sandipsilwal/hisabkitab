@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Extra extends Model
 {
-    protected $fillable = ['title', 'amount'];
+    protected $fillable = ['title', 'amount', 'is_default'];
 }
