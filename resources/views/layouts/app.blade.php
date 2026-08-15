@@ -721,7 +721,8 @@
                                            request()->is('skatepark/default_times*') || 
                                            request()->is('skatepark/rates*') || 
                                            request()->is('skatepark/tokens*') || 
-                                           request()->is('skatepark/packages*');
+                                           request()->is('skatepark/packages*') ||
+                                           request()->is('extras*');
                     @endphp
                     <li class="nav-item dropdown w-100">
                         <a class="nav-link dropdown-toggle {{ $isMastersActive ? 'active' : '' }}" href="#" id="mastersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -734,6 +735,7 @@
                             <li><a class="dropdown-item {{ request()->is('skatepark/rates*') ? 'active' : '' }}" href="{{ route('rates.index') }}">{{ __('Rates') }}</a></li>
                             <li><a class="dropdown-item {{ request()->is('skatepark/tokens*') ? 'active' : '' }}" href="{{ route('tokens.index') }}">{{ __('Tokens') }}</a></li>
                             <li><a class="dropdown-item {{ request()->is('skatepark/packages*') ? 'active' : '' }}" href="{{ route('packages.index') }}">{{ __('Packages') }}</a></li>
+                            <li><a class="dropdown-item {{ request()->is('extras*') ? 'active' : '' }}" href="{{ route('extras.index') }}">{{ __('Extras') }}</a></li>
                         </ul>
                     </li>
 

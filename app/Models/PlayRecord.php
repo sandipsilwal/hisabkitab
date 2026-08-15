@@ -45,4 +45,9 @@ class PlayRecord extends Model
     {
         return $this->belongsTo(PaymentType::class);
     }
+
+    public function playRecordExtras()
+    {
+        return $this->hasMany(PlayRecordExtra::class);
+    }
 }

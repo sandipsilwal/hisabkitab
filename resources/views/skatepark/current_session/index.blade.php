@@ -765,6 +765,50 @@
 
 
 <!-- ==============================================
+     MODAL: ADD EXTRA
+     ============================================== -->
+<div class="modal fade" id="addExtraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4" style="max-width: 500px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fw-bold">{{ __('Add Extra to Play Session') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-extra-form" onsubmit="submitAddExtra(event)">
+                <input type="hidden" id="add-extra-record-id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="add-extra-id" class="form-label fw-bold">{{ __('Select Extra') }}</label>
+                        <select class="form-select form-select-lg" id="add-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                            <option value="">-- {{ __('Select Item') }} --</option>
+                            @foreach($extras as $extra)
+                                <option value="{{ $extra->id }}">{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-extra-quantity" class="form-label fw-bold">{{ __('Quantity') }}</label>
+                        <input type="number" class="form-control form-control-lg" id="add-extra-quantity" required min="1" value="1" style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-extra-payment-type" class="form-label fw-bold">{{ __('Payment Type') }}</label>
+                        <select class="form-select form-select-lg" id="add-extra-payment-type" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                            @foreach($paymentTypes as $pt)
+                                <option value="{{ $pt->id }}" {{ $defaultPaymentType && $defaultPaymentType->id == $pt->id ? 'selected' : '' }}>{{ $pt->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary fw-semibold" style="border-radius: 8px;" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                    <button type="submit" class="btn btn-primary fw-semibold" style="border-radius: 8px;">✓ {{ __('Add Extra') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
      MODAL: ADD TRANSACTION (Quick transaction entry)
      ============================================== -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
@@ -1378,8 +1422,9 @@
         }
 
         const isPaymentAlert = record.payment_type && (record.payment_type.is_alert || record.payment_type.is_alert === 1 || record.payment_type.is_alert === true);
-        const alertClass = isPaymentAlert ? 'payment-alert-bg' : '';
-        const paymentLabel = (isPaymentAlert ? '⚠️ ' : '') + (record.payment_type ? record.payment_type.name : 'Unknown');
+        const hasUnpaidExtras = record.play_record_extras && record.play_record_extras.some(e => e.status === 'Not Paid');
+        const alertClass = (isPaymentAlert || hasUnpaidExtras) ? 'payment-alert-bg' : '';
+        const paymentLabel = (isPaymentAlert || hasUnpaidExtras ? '⚠️ ' : '') + (record.payment_type ? record.payment_type.name : 'Unknown') + (hasUnpaidExtras ? ' (+ Extras)' : '');
 
         // Build Edit/Delete vertical stack HTML
         let editDeleteStackHtml = '';
@@ -1388,10 +1433,15 @@
                 <div class="d-flex flex-column edit-delete-stack-${record.id}" style="width: 68px; gap: 4px;">
                     <button class="btn btn-outline-warning btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openEditModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">${translations.editText}</button>
                     <button class="btn btn-outline-danger btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="deletePlayRecord(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">${translations.deleteText}</button>
+                    <button class="btn btn-outline-info btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openAddExtraModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">+ Extra</button>
                 </div>
             `;
         } else {
-            editDeleteStackHtml = `<div style="width: 68px;"></div>`;
+            editDeleteStackHtml = `
+                <div class="d-flex flex-column edit-delete-stack-${record.id}" style="width: 68px; gap: 4px;">
+                    <button class="btn btn-outline-info btn-sm fw-bold d-flex align-items-center justify-content-center" onclick="openAddExtraModal(${record.id})" style="font-size: 0.75rem; border-radius: 6px; height: 26px; padding: 0; line-height: 1;">+ Extra</button>
+                </div>
+            `;
         }
 
         return `
@@ -1615,6 +1665,9 @@
                     if (enteredAmount !== null) {
                         postData.amount = enteredAmount;
                     }
+                    if (hasUnpaidExtras) {
+                        postData.mark_extras_paid = true;
+                    }
 
                     $.ajax({
                         url: `/skatepark/api/play-records/${recordId}/stop`,
@@ -1638,7 +1691,20 @@
             });
         }
 
-        if (isPaymentAlert) {
+        if (hasUnpaidExtras) {
+            showConfirmModal({
+                title: "{{ __('Unpaid Extras Check') }}",
+                message: "{{ __('This session has unpaid extras. Did they pay for this extra?') }}",
+                icon: '❓',
+                theme: 'yellow',
+                confirmText: "{{ __('Yes, Paid & Proceed') }}",
+                confirmClass: 'btn-warning text-dark fw-bold',
+                showAmountField: false,
+                onConfirm: function() {
+                    setTimeout(proceedToStopModal, 300);
+                }
+            });
+        } else if (isPaymentAlert) {
             const paymentName = record.payment_type ? record.payment_type.name : '';
             showConfirmModal({
                 title: "{{ __('Unpaid / Alert Payment Check') }}",
@@ -1655,6 +1721,47 @@
         } else {
             proceedToStopModal();
         }
+    }
+
+    function openAddExtraModal(recordId) {
+        document.getElementById('add-extra-record-id').value = recordId;
+        document.getElementById('add-extra-form').reset();
+        var addExtraModal = new bootstrap.Modal(document.getElementById('addExtraModal'));
+        addExtraModal.show();
+    }
+
+    function submitAddExtra(event) {
+        event.preventDefault();
+        const recordId = document.getElementById('add-extra-record-id').value;
+        const extraId = document.getElementById('add-extra-id').value;
+        const quantity = document.getElementById('add-extra-quantity').value;
+        const paymentTypeId = document.getElementById('add-extra-payment-type').value;
+
+        const submitBtn = document.querySelector('#add-extra-form button[type="submit"]');
+        submitBtn.disabled = true;
+
+        $.ajax({
+            url: `/skatepark/api/play-records/${recordId}/extras`,
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                extra_id: extraId,
+                quantity: quantity,
+                payment_type_id: paymentTypeId
+            },
+            dataType: "json",
+            success: function(res) {
+                submitBtn.disabled = false;
+                if (res.success) {
+                    $('#addExtraModal').modal('hide');
+                    refreshSessionList();
+                }
+            },
+            error: function(err) {
+                submitBtn.disabled = false;
+                alert(err.responseJSON ? err.responseJSON.message : "Error adding extra");
+            }
+        });
     }
 
     function deletePlayRecord(recordId) {

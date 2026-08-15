@@ -16,6 +16,7 @@ use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerPackageController;
 use App\Http\Controllers\PlayerPackagePaymentHistoryController;
 use App\Http\Controllers\CurrentSessionController;
+use App\Http\Controllers\ExtraController;
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -59,12 +60,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('player_packages', PlayerPackageController::class);
         Route::resource('player_packages.payments', PlayerPackagePaymentHistoryController::class);
 
+        Route::resource('extras', ExtraController::class);
+        
         // Current Session Command Center
         Route::get('current-session', [CurrentSessionController::class, 'index'])->name('skatepark.current-session');
         
         // AJAX Endpoints
         Route::get('api/session-data', [CurrentSessionController::class, 'getSessionData'])->name('skatepark.api.session-data');
         Route::post('api/play-records', [CurrentSessionController::class, 'storePlayRecord'])->name('skatepark.api.store-play-record');
+        Route::post('api/play-records/{playRecord}/extras', [CurrentSessionController::class, 'storePlayRecordExtra'])->name('skatepark.api.store-play-record-extra');
         Route::post('api/play-records/{playRecord}/start', [CurrentSessionController::class, 'startPlayRecord'])->name('skatepark.api.start-play-record');
         Route::post('api/play-records/{playRecord}/stop', [CurrentSessionController::class, 'stopPlayRecord'])->name('skatepark.api.stop-play-record');
         Route::post('api/play-records/{playRecord}/update', [CurrentSessionController::class, 'updatePlayRecord'])->name('skatepark.api.update-play-record');

@@ -41,6 +41,9 @@ class CurrentSessionController extends Controller
         // Load accounts for the quick transaction modal
         $accounts = Account::all();
 
+        // Load extras
+        $extras = \App\Models\Extra::orderBy('title')->get();
+
         return view('skatepark.current_session.index', compact(
             'tokens',
             'defaultTimes',
@@ -48,7 +51,8 @@ class CurrentSessionController extends Controller
             'defaultPaymentType',
             'defaultGameType',
             'playerPackages',
-            'accounts'
+            'accounts',
+            'extras'
         ));
     }
 
@@ -58,7 +62,14 @@ class CurrentSessionController extends Controller
     public function getSessionData()
     {
         $activeRecords = PlayRecord::whereNull('end_time')
-            ->with(['token.gameType', 'gameType', 'playerPackage.player', 'paymentType'])
+            ->with([
+                'token.gameType', 
+                'gameType', 
+                'playerPackage.player', 
+                'paymentType',
+                'playRecordExtras.extra',
+                'playRecordExtras.paymentType'
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -168,6 +179,36 @@ class CurrentSessionController extends Controller
     }
 
     /**
+     * AJAX endpoint to store a new extra for an active play record.
+     */
+    public function storePlayRecordExtra(Request $request, PlayRecord $playRecord)
+    {
+        $request->validate([
+            'extra_id' => 'required|exists:extras,id',
+            'quantity' => 'required|integer|min:1',
+            'payment_type_id' => 'required|exists:payment_types,id',
+        ]);
+
+        $extra = \App\Models\Extra::find($request->extra_id);
+        $totalAmount = $extra->amount * $request->quantity;
+
+        $playRecordExtra = \App\Models\PlayRecordExtra::create([
+            'play_record_id' => $playRecord->id,
+            'extra_id' => $request->extra_id,
+            'quantity' => $request->quantity,
+            'total_amount' => $totalAmount,
+            'payment_type_id' => $request->payment_type_id,
+            'status' => 'Not Paid'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Extra added successfully!',
+            'data' => $playRecordExtra->load(['extra', 'paymentType'])
+        ]);
+    }
+
+    /**
      * AJAX endpoint to start the time counter for a play record.
      */
     public function startPlayRecord(PlayRecord $playRecord)
@@ -236,6 +277,12 @@ class CurrentSessionController extends Controller
                 'actual_time' => $actualTimeMinutes,
                 'amount' => $amount
             ]);
+
+            if ($request->boolean('mark_extras_paid')) {
+                \App\Models\PlayRecordExtra::where('play_record_id', $playRecord->id)
+                    ->where('status', 'Not Paid')
+                    ->update(['status' => 'Paid']);
+            }
 
             // If it is a package play record, accumulate total actual time and check for package completion
             if ($playRecord->player_type === 'package' && $playRecord->player_package_id) {
@@ -400,6 +447,26 @@ class CurrentSessionController extends Controller
             ->groupBy(fn($r) => optional($r->paymentType)->name ?? 'Unknown')
             ->map(fn($g) => $g->sum('amount'));
 
+        // Load Paid Extras to add to totals
+        $paidExtras = \App\Models\PlayRecordExtra::with('paymentType')
+            ->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
+                $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+            })
+            ->where('status', 'Paid')
+            ->get();
+            
+        $extrasTotal = $paidExtras->sum('total_amount');
+        $totalRevenue += $extrasTotal;
+        $normalRevenue += $extrasTotal;
+
+        foreach($paidExtras as $extra) {
+            $pName = optional($extra->paymentType)->name ?? 'Unknown';
+            if (!isset($paymentBreakdown[$pName])) {
+                $paymentBreakdown[$pName] = 0;
+            }
+            $paymentBreakdown[$pName] += $extra->total_amount;
+        }
+
         return view('skatepark.reports.index', compact(
             'records',
             'packagePayments',
@@ -478,8 +545,14 @@ class CurrentSessionController extends Controller
             $packagePaymentsTotal = \App\Models\PlayerPackagePaymentHistory::whereBetween('date', [$fromDt, $toDt])
                 ->sum('amount');
 
+            $extrasTotal = \App\Models\PlayRecordExtra::whereHas('playRecord', function($q) use ($fromDt, $toDt) {
+                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                })
+                ->where('status', 'Paid')
+                ->sum('total_amount');
+
             return response()->json([
-                'total' => $normalRevenue + $packagePaymentsTotal
+                'total' => $normalRevenue + $packagePaymentsTotal + $extrasTotal
             ]);
         } catch (\Exception $e) {
             return response()->json(['total' => 0, 'error' => $e->getMessage()]);
