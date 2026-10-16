@@ -46,8 +46,8 @@ class CurrentSessionController extends Controller
         // Load accounts for the quick transaction modal
         $accounts = Account::all();
 
-        // Load extras
-        $extras = \App\Models\Extra::orderBy('title')->get();
+        // Load extras ordered by display_order ascending
+        $extras = \App\Models\Extra::orderBy('display_order', 'asc')->orderBy('id', 'asc')->get();
 
         return view('skatepark.current_session.index', compact(
             'tokens',

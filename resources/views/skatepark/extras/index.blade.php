@@ -13,10 +13,11 @@
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4 text-start py-3" style="width: 100px;">{{ __('ID') }}</th>
+                        <th class="ps-4 text-start py-3" style="width: 80px;">{{ __('ID') }}</th>
                         <th class="text-start py-3">{{ __('Title') }}</th>
                         <th class="text-start py-3">{{ __('Amount') }}</th>
-                        <th class="pe-4 text-end py-3" style="width: 250px;">{{ __('Actions') }}</th>
+                        <th class="text-start py-3" style="width: 140px;">{{ __('Display Order') }}</th>
+                        <th class="pe-4 text-end py-3" style="width: 220px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,6 +31,9 @@
                                 @endif
                             </td>
                             <td class="text-start text-dark">Rs. {{ number_format($extra->amount) }}</td>
+                            <td class="text-start font-monospace">
+                                <span class="badge bg-light text-dark border px-2.5 py-1 fw-bold">{{ $extra->display_order ?? 0 }}</span>
+                            </td>
                             <td class="pe-4 text-end">
                                 <button type="button" class="btn btn-outline-warning btn-sm me-1" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#editExtraModal{{ $extra->id }}">
                                     {{ __('Edit') }}
@@ -45,7 +49,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="fs-1 d-block mb-2 text-secondary">🏷️</i>
                                 {{ __('No extras found. Click "+ Add New Extra" to add.') }}
                             </td>
@@ -75,6 +79,11 @@
                     <div class="mb-3">
                         <label for="add-amount" class="form-label fw-semibold">{{ __('Amount (Rs.)') }}</label>
                         <input type="number" class="form-control" id="add-amount" name="amount" placeholder="{{ __('e.g. 50') }}" value="{{ old('amount') }}" required min="0" style="border-radius: 8px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-display-order" class="form-label fw-semibold">{{ __('Display Order') }}</label>
+                        <input type="number" class="form-control" id="add-display-order" name="display_order" placeholder="{{ __('e.g. 1') }}" value="{{ old('display_order', 1) }}" min="0" style="border-radius: 8px;">
+                        <small class="text-muted" style="font-size: 0.78rem;">{{ __('Lower number appears first (1 comes before 2).') }}</small>
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="add-is-default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
@@ -110,6 +119,11 @@
                     <div class="mb-3">
                         <label for="edit-amount-{{ $extra->id }}" class="form-label fw-semibold">{{ __('Amount (Rs.)') }}</label>
                         <input type="number" class="form-control" id="edit-amount-{{ $extra->id }}" name="amount" value="{{ old('amount', $extra->amount) }}" required min="0" style="border-radius: 8px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-display-order-{{ $extra->id }}" class="form-label fw-semibold">{{ __('Display Order') }}</label>
+                        <input type="number" class="form-control" id="edit-display-order-{{ $extra->id }}" name="display_order" value="{{ old('display_order', $extra->display_order) }}" min="0" style="border-radius: 8px;">
+                        <small class="text-muted" style="font-size: 0.78rem;">{{ __('Lower number appears first (1 comes before 2).') }}</small>
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit-is-default-{{ $extra->id }}" name="is_default" value="1" {{ old('is_default', $extra->is_default) ? 'checked' : '' }}>

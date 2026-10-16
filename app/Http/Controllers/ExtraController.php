@@ -12,7 +12,7 @@ class ExtraController extends Controller
      */
     public function index()
     {
-        $extras = Extra::orderBy('id', 'desc')->get();
+        $extras = Extra::orderBy('display_order', 'asc')->orderBy('id', 'asc')->get();
         return view('skatepark.extras.index', compact('extras'));
     }
 
@@ -26,10 +26,15 @@ class ExtraController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
+            'display_order' => 'nullable|integer',
         ]);
 
         $data = $request->all();
         $data['is_default'] = $request->has('is_default');
+
+        if (!isset($data['display_order']) || $data['display_order'] === null || $data['display_order'] === '') {
+            $data['display_order'] = (Extra::max('display_order') ?? 0) + 1;
+        }
 
         if ($data['is_default']) {
             Extra::where('id', '>', 0)->update(['is_default' => false]);
@@ -54,10 +59,15 @@ class ExtraController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
+            'display_order' => 'nullable|integer',
         ]);
 
         $data = $request->all();
         $data['is_default'] = $request->has('is_default');
+
+        if (!isset($data['display_order']) || $data['display_order'] === null || $data['display_order'] === '') {
+            $data['display_order'] = 0;
+        }
 
         if ($data['is_default']) {
             Extra::where('id', '!=', $extra->id)->update(['is_default' => false]);

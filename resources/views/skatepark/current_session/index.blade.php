@@ -896,12 +896,15 @@
                     <div class="col-md-6 border-end-md pe-md-4">
                         <form id="add-extra-form" onsubmit="submitAddExtra(event)">
                             <input type="hidden" id="add-extra-record-id">
+                            @php
+                                $firstExtraId = $extras->first()?->id;
+                            @endphp
                             <div class="mb-3">
                                 <label for="add-extra-id" class="form-label fw-bold">{{ __('Select Extra') }}</label>
                                 <select class="form-select form-select-lg" id="add-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;" onchange="calculateExtraTotal()">
                                     <option value="" data-amount="0">-- {{ __('Select Item') }} --</option>
                                     @foreach($extras as $extra)
-                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->is_default ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->id === $firstExtraId ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -960,7 +963,7 @@
                                 <select class="form-select form-select-lg" id="sell-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;" onchange="calculateSellExtraTotal()">
                                     <option value="" data-amount="0">-- {{ __('Select Item') }} --</option>
                                     @foreach($extras as $extra)
-                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->is_default ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->id === $firstExtraId ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -1731,7 +1734,7 @@
                         <!-- Left: Token / Player Name -->
                         <div class="d-flex align-items-center gap-1" style="flex-shrink: 0; min-width: 60px; max-width: 100%; word-break: break-word;">
                             <span class="badge-token text-dark" style="font-size: 1.15rem; font-weight: 800;" title="Token: ${tokenName}">${badgeText}</span>
-                            <button class="btn btn-outline-info btn-sm fw-bold px-2.5 ms-1.5 btn-play-extra" onclick="openAddExtraModal(${record.id})" style="font-size: 0.85rem; border-radius: 7px; height: 30px; line-height: 1; border-width: 1.5px; display: inline-flex; align-items: center; justify-content: center; gap: 2px;">+Extra</button>
+                            <button class="btn btn-outline-info btn-sm fw-bold px-2.5 ms-1.5 btn-play-extra" onclick="openAddExtraModal(${record.id})" style="font-size: 0.85rem; border-radius: 7px; height: 30px; line-height: 1; border-width: 1.5px; display: inline-flex; align-items: center; justify-content: center; gap: 2px;">+sell extra</button>
                         </div>
                         
                         <!-- Middle: Timer Counter -->
@@ -2055,6 +2058,17 @@
         document.getElementById('add-extra-record-id').value = recordId;
         document.getElementById('add-extra-form').reset();
         
+        // Ensure the extra with the lowest display_order (first in ascending order) is selected
+        const extraSelect = document.getElementById('add-extra-id');
+        if (extraSelect) {
+            for (let i = 0; i < extraSelect.options.length; i++) {
+                if (extraSelect.options[i].value !== '') {
+                    extraSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
         // Let it calculate based on the default selected item
         calculateExtraTotal();
         
@@ -2199,6 +2213,18 @@
     function openSellExtraModal() {
         const form = document.getElementById('sell-extra-form');
         if (form) form.reset();
+
+        // Ensure the extra with the lowest display_order (first in ascending order) is selected
+        const sellSelect = document.getElementById('sell-extra-id');
+        if (sellSelect) {
+            for (let i = 0; i < sellSelect.options.length; i++) {
+                if (sellSelect.options[i].value !== '') {
+                    sellSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
         calculateSellExtraTotal();
         loadRecentDirectSales();
         
