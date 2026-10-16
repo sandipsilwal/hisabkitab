@@ -6,6 +6,10 @@ use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use App\Models\Account;
 use App\Models\Day;
 use App\Models\Transaction;
+use App\Models\PlayRecord;
+use App\Models\PlayRecordExtra;
+use App\Models\PlayerPackagePaymentHistory;
+use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,27 +20,120 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Transaction::query();//
+        $query = Transaction::query();
         $dayQuery = Day::query();
         $filter_account_id = null;
 
         // Apply date filters using the trait
-        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);//
+        [$query, $filter_date_range] = $this->applyDateFilters($query, $request);
         [$dayQuery, $day_filter_date_range] = $this->applyDateFilters($dayQuery, $request);
 
         // Handle account filter
         if ($request->filled('account_id')) {
             $filter_account_id = $request->account_id;
-            $query->where('to_account_id', $request->account_id);//
-            $dayQuery->where('to_account_id', $request->account_id);
+            $query->where('to_account_id', $filter_account_id);
+            $dayQuery->whereHas('transactions', function ($q) use ($filter_account_id) {
+                $q->where('to_account_id', $filter_account_id);
+            });
         }
-        $total_amount = $query->clone()->sum('amount');//
-        $day_total_amount = $dayQuery->clone()->sum('total');
-        $days = $dayQuery->orderBy('date_ad', 'desc')->with('transactions')->paginate(50);
-        $transactions = $query->orderBy('date_ad', 'desc')->with('toAccount')->paginate(50);//
+        $total_amount = $query->clone()->sum('amount');
+        $day_total_amount = $total_amount;
+        $days = $dayQuery->orderBy('date_ad', 'desc')
+            ->with([
+                'transactions' => function ($q) use ($filter_account_id) {
+                    if ($filter_account_id) {
+                        $q->where('to_account_id', $filter_account_id);
+                    }
+                },
+                'transactions.toAccount'
+            ])
+            ->paginate(50)
+            ->withQueryString();
+
+        // Compare each day's total with the corresponding date's total play records amount & play records extras amounts
+        $skateparkTotals = [];
+        $dateAds = $days->pluck('date_ad')->unique()->filter()->values();
+
+        if ($dateAds->isNotEmpty()) {
+            $minDate = $dateAds->min();
+            $maxDate = $dateAds->max();
+
+            $fromDt = Carbon::parse($minDate)->startOfDay();
+            $toDt   = Carbon::parse($maxDate)->endOfDay();
+
+            // 1. Play records normal player revenue by date
+            $playRecordsByDate = PlayRecord::whereNotNull('end_time')
+                ->whereBetween('end_time', [$fromDt, $toDt])
+                ->where('player_type', 'normal')
+                ->selectRaw('DATE(end_time) as date, SUM(amount) as total_amount')
+                ->groupBy(DB::raw('DATE(end_time)'))
+                ->pluck('total_amount', 'date');
+
+            // 2. Play record extras linked to play records
+            $sessionExtrasByDate = PlayRecordExtra::whereNotNull('play_record_id')
+                ->where('status', 'Paid')
+                ->whereHas('playRecord', function ($q) use ($fromDt, $toDt) {
+                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                })
+                ->join('play_records', 'play_record_extras.play_record_id', '=', 'play_records.id')
+                ->selectRaw('DATE(play_records.end_time) as date, SUM(play_record_extras.total_amount) as total_amount')
+                ->groupBy(DB::raw('DATE(play_records.end_time)'))
+                ->pluck('total_amount', 'date');
+
+            // 3. Standalone direct extra sales
+            $directExtrasByDate = PlayRecordExtra::whereNull('play_record_id')
+                ->where('status', 'Paid')
+                ->whereBetween('created_at', [$fromDt, $toDt])
+                ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total_amount')
+                ->groupBy(DB::raw('DATE(created_at)'))
+                ->pluck('total_amount', 'date');
+
+            // 4. Package payment histories
+            $packagePaymentsByDate = PlayerPackagePaymentHistory::whereBetween('date', [$fromDt, $toDt])
+                ->selectRaw('DATE(date) as date, SUM(amount) as total_amount')
+                ->groupBy(DB::raw('DATE(date)'))
+                ->pluck('total_amount', 'date');
+
+            foreach ($dateAds as $date) {
+                $dateKey = Carbon::parse($date)->format('Y-m-d');
+                $pr  = floatval($playRecordsByDate[$dateKey] ?? 0);
+                $se  = floatval($sessionExtrasByDate[$dateKey] ?? 0);
+                $de  = floatval($directExtrasByDate[$dateKey] ?? 0);
+                $pkg = floatval($packagePaymentsByDate[$dateKey] ?? 0);
+
+                $skateparkTotals[$dateKey] = $pr + $se + $de + $pkg;
+            }
+        }
+
+        // Total transactions recorded for each specific date
+        $dateTxnTotals = Transaction::whereIn('date_ad', $dateAds)
+            ->selectRaw('DATE(date_ad) as date, SUM(amount) as total_amount')
+            ->groupBy(DB::raw('DATE(date_ad)'))
+            ->pluck('total_amount', 'date');
+
+        $dateDaySums = [];
+        foreach ($days as $d) {
+            $dateKey = Carbon::parse($d->date_ad)->format('Y-m-d');
+            $dateDaySums[$dateKey] = ($dateDaySums[$dateKey] ?? 0) + floatval($d->total);
+        }
+
+        foreach ($days as $day) {
+            $dateKey   = Carbon::parse($day->date_ad)->format('Y-m-d');
+            $expected  = floatval($skateparkTotals[$dateKey] ?? 0);
+            $dateTotal = floatval($dateTxnTotals[$dateKey] ?? ($dateDaySums[$dateKey] ?? ($day->total ?: $day->transactions->sum('amount'))));
+
+            // Only show yellow background IF the total transaction amount of that specific date is LESS than the total play records of that date
+            $isLessThanPlayRecords = ($expected > 0) && ($dateTotal < ($expected - 0.01));
+
+            $day->expected_skatepark_total = $expected;
+            $day->date_total_transactions  = $dateTotal;
+            $day->has_skatepark_discrepancy = $isLessThanPlayRecords;
+        }
+
+        $transactions = $query->orderBy('date_ad', 'desc')->with('toAccount')->paginate(50)->withQueryString();
         $accounts = Account::all();
 
-        return view('transactions.index', compact('days','day_total_amount','total_amount', 'transactions', 'accounts', 'filter_date_range', 'filter_account_id'));
+        return view('transactions.index', compact('days', 'day_total_amount', 'total_amount', 'transactions', 'accounts', 'filter_date_range', 'filter_account_id'));
     }
 
     public function create()

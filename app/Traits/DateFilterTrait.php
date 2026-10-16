@@ -9,31 +9,29 @@ use Illuminate\Http\Request;
 trait DateFilterTrait
 {
     /**
-     * Apply Nepali date filters to a query.
+     * Resolve Nepali date filter range to AD dates.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
      * @param \Illuminate\Http\Request $request
-     * @return array
+     * @return array [$startDateADString|null, $endDateADString|null, $filter_date_range]
      */
-    protected function applyDateFilters($query, Request $request)
+    protected function resolveNepaliDateRange(Request $request)
     {
         $filter_date_range = '';
-        
+
         // Handle custom date range filter
         if ($request->filled('date_range_filter') && !$request->filled('date_filter')) {
             $filter_date_range = $request->date_range_filter;
-            [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
         }
 
-        // Handle predefined date filters (This Month, Last Month, This Week, Last Week)
+        // Handle predefined date filters (Today, This Month, Last Month, This Week, Last Week)
         if ($request->filled('date_filter')) {
             $today = LaravelNepaliDate::from(now())->toNepaliDate();
             [$currentYear, $currentMonth, $currentDay] = explode('-', $today);
 
             switch ($request->date_filter) {
+                case 'today':
+                    $filter_date_range = "$today - $today";
+                    break;
                 case 'this_month':
                     $startDateBS = "$currentYear-$currentMonth-01";
                     $endDateBS = "$currentYear-$currentMonth-32";
@@ -41,11 +39,12 @@ trait DateFilterTrait
                     break;
                 case 'last_month':
                     $lastYear = $currentYear;
-                    $lastMonth = $currentMonth-1;
-                    if($lastMonth<1){
+                    $lastMonth = $currentMonth - 1;
+                    if ($lastMonth < 1) {
                         $lastMonth = 12;
                         $lastYear -= 1;
                     }
+                    $lastMonth = str_pad($lastMonth, 2, '0', STR_PAD_LEFT);
                     $startDateBS = "$lastYear-$lastMonth-01";
                     $endDateBS = "$lastYear-$lastMonth-32";
                     $filter_date_range = "$startDateBS - $endDateBS";
@@ -62,12 +61,31 @@ trait DateFilterTrait
                     $filter_date_range = "$startDateBS - $endDateBS";
                     break;
             }
+        }
 
-            // Convert BS dates to AD for query
+        if (!empty($filter_date_range)) {
             [$startDateBS, $endDateBS] = explode(' - ', $filter_date_range);
-            $startDateAD = new DateTime(LaravelNepaliDate::from($startDateBS)->toEnglishDate());
-            $endDateAD = new DateTime(LaravelNepaliDate::from($endDateBS)->toEnglishDate());
-            $query->whereBetween('date_ad', [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d')]);
+            $startDateAD = new DateTime(LaravelNepaliDate::from(trim($startDateBS))->toEnglishDate());
+            $endDateAD = new DateTime(LaravelNepaliDate::from(trim($endDateBS))->toEnglishDate());
+            return [$startDateAD->format('Y-m-d'), $endDateAD->format('Y-m-d'), $filter_date_range];
+        }
+
+        return [null, null, $filter_date_range];
+    }
+
+    /**
+     * Apply Nepali date filters to a query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    protected function applyDateFilters($query, Request $request)
+    {
+        [$startDateAD, $endDateAD, $filter_date_range] = $this->resolveNepaliDateRange($request);
+
+        if ($startDateAD && $endDateAD) {
+            $query->whereBetween('date_ad', [$startDateAD, $endDateAD]);
         }
 
         return [$query, $filter_date_range];

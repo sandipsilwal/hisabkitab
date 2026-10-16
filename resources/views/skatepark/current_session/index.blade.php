@@ -280,6 +280,91 @@
         transform: translateY(-2px) !important;
     }
 
+    /* Sell Extra Button Custom Styling & Premium Hover Effects */
+    .btn-sell-extra {
+        background-color: #d97706 !important;
+        border: 2px solid #b45309 !important;
+        color: #ffffff !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .btn-sell-extra:hover,
+    .btn-sell-extra:active,
+    .btn-sell-extra:focus {
+        background-color: #b45309 !important;
+        border-color: #f59e0b !important;
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    body.dark-mode .btn-sell-extra {
+        background-color: #b45309 !important;
+        border-color: #d97706 !important;
+    }
+
+    body.dark-mode .btn-sell-extra:hover,
+    body.dark-mode .btn-sell-extra:active,
+    body.dark-mode .btn-sell-extra:focus {
+        background-color: #d97706 !important;
+        border-color: #fbbf24 !important;
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+    }
+
+    /* Multi-modal stacking & theme for txnWarningModal */
+    #txnWarningModal {
+        z-index: 1075 !important;
+    }
+    #txnWarningModal .alert-black-prompt,
+    #txnWarningModal .alert {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border: 1.5px solid #333333 !important;
+    }
+    #txnWarningModal .alert-black-prompt *,
+    #txnWarningModal .alert * {
+        color: #ffffff !important;
+    }
+    body.dark-mode #txnWarningModal .modal-content {
+        background-color: #1a1a1a !important;
+        border-color: #f59e0b !important;
+        color: #f1f5f9 !important;
+    }
+    body.dark-mode #txnWarningModal .text-dark {
+        color: #f1f5f9 !important;
+    }
+    body.dark-mode #txnWarningModal .text-muted {
+        color: #94a3b8 !important;
+    }
+    body.dark-mode #txnWarningModal .modal-footer {
+        background-color: #141414 !important;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+    body.dark-mode #txnWarningModal .border {
+        border-color: rgba(255,255,255,0.12) !important;
+    }
+    body.dark-mode #txnWarningModal #warn-day-total {
+        color: #f1f5f9 !important;
+    }
+    body.dark-mode #txnWarningModal div[style*="background: #f8fafc"] {
+        background: #141414 !important;
+    }
+    body.dark-mode #txnWarningModal div[style*="background: #fffbeb"] {
+        background: rgba(245, 158, 11, 0.1) !important;
+    }
+
+    .btn-play-extra {
+        font-size: 0.85rem !important;
+        height: 30px !important;
+        padding: 0 10px !important;
+        border-width: 1.5px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        border-radius: 7px !important;
+    }
+
     /* Mobile Responsive Overrides for smaller fonts and buttons */
     @media (max-width: 575.98px) {
         .timer-display {
@@ -287,6 +372,11 @@
         }
         .badge-token {
             font-size: 0.95rem !important;
+        }
+        .skate-item .btn.btn-play-extra {
+            font-size: 0.8rem !important;
+            height: 28px !important;
+            padding: 0 8px !important;
         }
         h5.fw-bold.text-dark {
             font-size: 1.1rem !important;
@@ -308,6 +398,12 @@
             padding-top: 0.4rem !important;
             padding-bottom: 0.4rem !important;
         }
+        .btn-add-transaction, .btn-sell-extra {
+            font-size: 0.72rem !important;
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+            gap: 2px !important;
+        }
     }
 </style>
 
@@ -319,11 +415,20 @@
         </button>
     </div>
 
-    {{-- Add Transaction (center) --}}
+    {{-- Add Transaction & Sell Extra (center, divided into two halves) --}}
     <div class="col-6 col-md-4">
-        <button class="btn btn-add-transaction w-100 px-2 px-md-4 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1 gap-md-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-            <span>💳</span> {{ __('Add Transaction') }}
-        </button>
+        <div class="row g-2">
+            <div class="col-6">
+                <button class="btn btn-add-transaction w-100 px-1 px-sm-2 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1 text-truncate" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#addTransactionModal" title="{{ __('Add Transaction') }}">
+                    <span>💳</span> <span class="d-inline text-truncate">{{ __('Add Transaction') }}</span>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="btn btn-sell-extra w-100 px-1 px-sm-2 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1 text-truncate" style="border-radius: 10px;" onclick="openSellExtraModal()" title="{{ __('Sell Extra') }}">
+                    <span>🍿</span> <span class="d-inline text-truncate">{{ __('Sell Extra') }}</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="col-12 col-md-4">
@@ -753,6 +858,17 @@
                             <input type="number" class="form-control border-2 border-primary" id="confirm-custom-amount" min="0" value="0" style="border-radius: 8px;">
                             <div class="form-text text-muted" style="font-size: 0.75rem;">{{ __('This play session currently has a Rs. 0 charge amount. Please enter the final amount.') }}</div>
                         </div>
+
+                        <!-- Dynamic payment type select field for unpaid confirmation workflow -->
+                        <div class="mt-3 d-none" id="confirm-payment-type-field">
+                            <label for="confirm-payment-type" class="form-label fw-bold text-dark mb-1" style="font-size: 0.85rem;" id="confirm-payment-type-label">{{ __('Select Payment Type') }}</label>
+                            <select class="form-select border-2 border-primary" id="confirm-payment-type" style="border-radius: 8px; font-size: 0.9rem;">
+                                @foreach($paymentTypes as $pt)
+                                    <option value="{{ $pt->id }}" {{ strtolower(trim($pt->name)) == 'cash' ? 'selected' : '' }}>{{ $pt->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">{{ __('Select how this payment was received.') }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -825,6 +941,68 @@
 </div>
 
 <!-- ==============================================
+     MODAL: SELL EXTRA (Direct sale without play record)
+     ============================================== -->
+<div class="modal fade" id="sellExtraModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4 modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fw-bold">🍿 {{ __('Sell Extra') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row">
+                    <!-- Left Column: Form -->
+                    <div class="col-md-6 border-end-md pe-md-4">
+                        <form id="sell-extra-form" onsubmit="submitSellExtra(event)">
+                            <div class="mb-3">
+                                <label for="sell-extra-id" class="form-label fw-bold">{{ __('Select Extra') }}</label>
+                                <select class="form-select form-select-lg" id="sell-extra-id" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;" onchange="calculateSellExtraTotal()">
+                                    <option value="" data-amount="0">-- {{ __('Select Item') }} --</option>
+                                    @foreach($extras as $extra)
+                                        <option value="{{ $extra->id }}" data-amount="{{ $extra->amount }}" {{ $extra->is_default ? 'selected' : '' }}>{{ $extra->title }} (Rs. {{ $extra->amount }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sell-extra-quantity" class="form-label fw-bold">{{ __('Quantity') }}</label>
+                                <input type="number" class="form-control form-control-lg" id="sell-extra-quantity" required min="1" value="1" style="border-radius: 8px; font-size: 0.9rem; height: 42px;" oninput="calculateSellExtraTotal()">
+                            </div>
+                            <div class="mb-3">
+                                <label for="sell-extra-total" class="form-label fw-bold">{{ __('Total Amount (Rs.)') }}</label>
+                                <input type="number" class="form-control form-control-lg fw-bold" id="sell-extra-total" readonly value="0.00" style="border-radius: 8px; font-size: 0.9rem; height: 42px; background-color: #f8fafc; color: #1e293b;">
+                            </div>
+                            <div class="mb-3">
+                                <label for="sell-extra-payment-type" class="form-label fw-bold">{{ __('Payment Type') }}</label>
+                                <select class="form-select form-select-lg" id="sell-extra-payment-type" required style="border-radius: 8px; font-size: 0.9rem; height: 42px;">
+                                    @foreach($paymentTypes as $pt)
+                                        <option value="{{ $pt->id }}" {{ strtolower(trim($pt->name)) == 'cash' || ($defaultPaymentType && $defaultPaymentType->id == $pt->id) ? 'selected' : '' }}>{{ $pt->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-warning fw-semibold text-dark" id="btn-submit-sell-extra" style="border-radius: 8px; height: 42px; background-color: #f59e0b; border-color: #f59e0b;">✓ {{ __('Sell Extra') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Right Column: Recent Direct Extras Sold Today -->
+                    <div class="col-md-6 ps-md-4 mt-4 mt-md-0">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <h6 class="fw-bold mb-0">{{ __('Recent Direct Sales') }}</h6>
+                            <span class="badge bg-secondary rounded-pill" id="sell-extras-count-badge">0</span>
+                        </div>
+                        <div id="sell-extras-recent-list" class="d-flex flex-column gap-2 p-2 rounded" style="background-color: #000000 !important; border: 1.5px solid #333333 !important; max-height: 350px; overflow-y: auto;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
      MODAL: ADD TRANSACTION (Quick transaction entry)
      ============================================== -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
@@ -882,6 +1060,63 @@
 </div>
 
 <!-- ==============================================
+     MODAL: TRANSACTION TOTAL DISCREPANCY WARNING
+     ============================================== -->
+<div class="modal fade" id="txnWarningModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true" style="z-index: 1075;">
+    <div class="modal-dialog modal-dialog-centered mt-5 mt-md-4" style="max-width: 480px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden; border: 2px solid #f59e0b !important;">
+            <div class="modal-header py-3" style="background-color: #d97706; color: #ffffff;">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.3rem;">⚠️</span>
+                    <h5 class="modal-title fw-bold text-white mb-0">{{ __('Transaction Amount Warning') }}</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-dark fw-medium mb-3" style="font-size: 0.95rem;">
+                    {{ __('The entered transaction total is less than the total recorded for this date.') }}
+                </p>
+
+                <!-- Comparison Summary Cards -->
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <div class="p-2.5 rounded text-center border" style="background: #f8fafc;">
+                            <div class="text-muted" style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700;">{{ __("Day's Total") }}</div>
+                            <div class="fw-bold fs-6 text-dark" id="warn-day-total">Rs. 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2.5 rounded text-center border" style="background: #f8fafc;">
+                            <div class="text-muted" style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700;">{{ __('Entered Total') }}</div>
+                            <div class="fw-bold fs-6 text-primary" id="warn-entered-total">Rs. 0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2.5 rounded text-center border" style="background: #fffbeb; border-color: #fde68a !important;">
+                            <div class="text-warning-emphasis" style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700;">{{ __('Difference') }}</div>
+                            <div class="fw-bold fs-6 text-danger" id="warn-diff-total">- Rs. 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-black-prompt py-2.5 px-3 d-flex align-items-center gap-2 mb-0" style="font-size: 0.88rem; border-radius: 8px; background-color: #000000 !important; color: #ffffff !important; border: 1.5px solid #333333 !important;">
+                    <span style="font-size: 1.15rem; line-height: 1;">ℹ️</span>
+                    <div style="color: #ffffff !important; font-weight: 500;">{{ __('Do you want to proceed and save this transaction anyway, or go back to edit the amounts?') }}</div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-secondary btn-sm fw-semibold px-3" style="border-radius: 8px; height: 38px;" data-bs-dismiss="modal">
+                    ← {{ __('Go Back & Edit') }}
+                </button>
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3 text-dark" id="warn-proceed-save-btn" style="border-radius: 8px; height: 38px; background-color: #f59e0b; border-color: #f59e0b;">
+                    {{ __('Proceed & Save Anyway') }} →
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
      DASHBOARD CONTROLLER & REAL-TIME TIMER ENGINE (JS)
      ============================================== -->
 <script>
@@ -914,6 +1149,12 @@
     const prefetchedAudio = new Map(); // Pre-buffered audio keyed by tokenName
 
     const defaultGameType = @json($defaultGameType);
+    @php
+        $cashPt = $paymentTypes->first(function($pt) {
+            return strtolower(trim($pt->name)) === 'cash';
+        }) ?? $defaultPaymentType ?? $paymentTypes->first();
+    @endphp
+    const defaultCashPaymentTypeId = {{ $cashPt ? $cashPt->id : 'null' }};
 
     // Add Play Modal Stepper States
     let addStep = 1;
@@ -1033,6 +1274,27 @@
             amountInput.val(0);
         }
 
+        // Capture elements for payment type input
+        const paymentTypeField = $('#confirm-payment-type-field');
+        const paymentTypeSelect = $('#confirm-payment-type');
+        const paymentTypeLabel = $('#confirm-payment-type-label');
+
+        if (options.showPaymentTypeField) {
+            paymentTypeField.removeClass('d-none');
+            if (options.paymentTypeLabel) {
+                paymentTypeLabel.text(options.paymentTypeLabel);
+            } else {
+                paymentTypeLabel.text("{{ __('Select Payment Type') }}");
+            }
+            if (options.defaultPaymentTypeId) {
+                paymentTypeSelect.val(options.defaultPaymentTypeId);
+            } else if (typeof defaultCashPaymentTypeId !== 'undefined' && defaultCashPaymentTypeId) {
+                paymentTypeSelect.val(defaultCashPaymentTypeId);
+            }
+        } else {
+            paymentTypeField.addClass('d-none');
+        }
+
         // Unbind any existing click events on the action button
         actionBtn.off('click');
 
@@ -1048,10 +1310,15 @@
                 customAmount = enteredVal;
             }
 
+            let selectedPaymentType = null;
+            if (options.showPaymentTypeField) {
+                selectedPaymentType = paymentTypeSelect.val();
+            }
+
             modal.modal('hide');
             
             if (typeof options.onConfirm === 'function') {
-                options.onConfirm(customAmount);
+                options.onConfirm(customAmount, selectedPaymentType);
             }
         });
 
@@ -1464,7 +1731,7 @@
                         <!-- Left: Token / Player Name -->
                         <div class="d-flex align-items-center gap-1" style="flex-shrink: 0; min-width: 60px; max-width: 100%; word-break: break-word;">
                             <span class="badge-token text-dark" style="font-size: 1.15rem; font-weight: 800;" title="Token: ${tokenName}">${badgeText}</span>
-                            <button class="btn btn-outline-info btn-sm fw-bold px-2 py-0 ms-1" onclick="openAddExtraModal(${record.id})" style="font-size: 0.7rem; border-radius: 6px; height: 22px; line-height: 1; border-width: 1.5px;">+ Extra</button>
+                            <button class="btn btn-outline-info btn-sm fw-bold px-2.5 ms-1.5 btn-play-extra" onclick="openAddExtraModal(${record.id})" style="font-size: 0.85rem; border-radius: 7px; height: 30px; line-height: 1; border-width: 1.5px; display: inline-flex; align-items: center; justify-content: center; gap: 2px;">+Extra</button>
                         </div>
                         
                         <!-- Middle: Timer Counter -->
@@ -1642,8 +1909,16 @@
         const record = activeRecords.find(r => r.id === parseInt(recordId));
         if (!record) return;
 
-        const isPaymentAlert = record.payment_type && (record.payment_type.is_alert || record.payment_type.is_alert === 1 || record.payment_type.is_alert === true);
+        const isPaymentAlert = record.payment_type && (
+            record.payment_type.is_alert || 
+            record.payment_type.is_alert === 1 || 
+            record.payment_type.is_alert === true || 
+            (record.payment_type.name && (record.payment_type.name.toLowerCase() === 'not paid' || record.payment_type.name.toLowerCase() === 'unpaid'))
+        );
         const hasUnpaidExtras = record.play_record_extras && record.play_record_extras.some(e => e.status === 'Not Paid');
+
+        let selectedRecordPaymentType = null;
+        let selectedExtraPaymentType = null;
 
         function proceedToStopModal() {
             const isAmountZero = (parseInt(record.amount) === 0);
@@ -1656,6 +1931,7 @@
                 confirmClass: 'btn-danger',
                 showAmountField: isAmountZero,
                 defaultAmount: 0,
+                showPaymentTypeField: false,
                 onConfirm: function(enteredAmount) {
                     // Optimistic UI: Immediately fade out and remove card from DOM
                     const cardEl = $(`#card-${recordId}`);
@@ -1680,6 +1956,12 @@
                     }
                     if (hasUnpaidExtras) {
                         postData.mark_extras_paid = true;
+                        if (selectedExtraPaymentType) {
+                            postData.extra_payment_type_id = selectedExtraPaymentType;
+                        }
+                    }
+                    if (selectedRecordPaymentType) {
+                        postData.payment_type_id = selectedRecordPaymentType;
                     }
 
                     $.ajax({
@@ -1704,33 +1986,52 @@
             });
         }
 
+        function checkRecordPayment() {
+            if (isPaymentAlert) {
+                const paymentName = record.payment_type ? record.payment_type.name : '';
+                showConfirmModal({
+                    title: "{{ __('Unpaid / Alert Payment Check') }}",
+                    message: `Rs. ${record.amount} {{ __('is unpaid') }} (${paymentName}). {{ __('Did they pay?') }}`,
+                    icon: '⚠️',
+                    theme: 'yellow',
+                    confirmText: "{{ __('Yes, Paid') }}",
+                    confirmClass: 'btn-warning text-dark fw-bold',
+                    showAmountField: false,
+                    showPaymentTypeField: true,
+                    paymentTypeLabel: "{{ __('Select Session Payment Type') }}",
+                    defaultPaymentTypeId: defaultCashPaymentTypeId,
+                    onConfirm: function(customAmount, selectedPaymentTypeId) {
+                        selectedRecordPaymentType = selectedPaymentTypeId;
+                        setTimeout(proceedToStopModal, 300);
+                    }
+                });
+            } else {
+                proceedToStopModal();
+            }
+        }
+
         if (hasUnpaidExtras) {
+            const unpaidExtras = record.play_record_extras.filter(e => e.status === 'Not Paid');
+            const unpaidExtrasCount = unpaidExtras.length;
+            const unpaidExtrasTotal = unpaidExtras.reduce((acc, e) => acc + (parseFloat(e.total_amount) || 0), 0);
             showConfirmModal({
                 title: "{{ __('Unpaid Extras Check') }}",
-                message: "{{ __('This session has unpaid extras. Did they pay for this extra?') }}",
+                message: `{{ __('This session has') }} ${unpaidExtrasCount} {{ __('unpaid extra(s)') }} (Rs. ${unpaidExtrasTotal}). {{ __('Did they pay for this extra?') }}`,
                 icon: '❓',
                 theme: 'yellow',
                 confirmText: "{{ __('Yes, Paid & Proceed') }}",
                 confirmClass: 'btn-warning text-dark fw-bold',
                 showAmountField: false,
-                onConfirm: function() {
-                    setTimeout(proceedToStopModal, 300);
+                showPaymentTypeField: true,
+                paymentTypeLabel: "{{ __('Select Extras Payment Type') }}",
+                defaultPaymentTypeId: defaultCashPaymentTypeId,
+                onConfirm: function(customAmount, selectedPaymentTypeId) {
+                    selectedExtraPaymentType = selectedPaymentTypeId;
+                    setTimeout(checkRecordPayment, 300);
                 }
             });
         } else if (isPaymentAlert) {
-            const paymentName = record.payment_type ? record.payment_type.name : '';
-            showConfirmModal({
-                title: "{{ __('Unpaid / Alert Payment Check') }}",
-                message: `Rs. ${record.amount} {{ __('is unpaid') }} (${paymentName}). {{ __('Did they pay?') }}`,
-                icon: '⚠️',
-                theme: 'yellow',
-                confirmText: "{{ __('Yes, Paid') }}",
-                confirmClass: 'btn-warning text-dark fw-bold',
-                showAmountField: false,
-                onConfirm: function() {
-                    setTimeout(proceedToStopModal, 300);
-                }
-            });
+            checkRecordPayment();
         } else {
             proceedToStopModal();
         }
@@ -1823,6 +2124,142 @@
             error: function(err) {
                 submitBtn.disabled = false;
                 alert(err.responseJSON ? err.responseJSON.message : "Error adding extra");
+            }
+        });
+    }
+
+    function calculateSellExtraTotal() {
+        const select = document.getElementById('sell-extra-id');
+        const quantity = parseInt(document.getElementById('sell-extra-quantity').value) || 0;
+        
+        let amount = 0;
+        if (select && select.selectedIndex >= 0) {
+            const option = select.options[select.selectedIndex];
+            amount = parseFloat(option.getAttribute('data-amount')) || 0;
+        }
+        
+        const total = amount * quantity;
+        const totalEl = document.getElementById('sell-extra-total');
+        if (totalEl) totalEl.value = total.toFixed(2);
+    }
+
+    function loadRecentDirectSales() {
+        const listContainer = document.getElementById('sell-extras-recent-list');
+        const countBadge = document.getElementById('sell-extras-count-badge');
+        if (!listContainer) return;
+        
+        $.ajax({
+            url: "{{ route('skatepark.api.recent-extra-sales') }}",
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                if (res.success && res.data && res.data.length > 0) {
+                    if (countBadge) countBadge.textContent = res.data.length;
+                    listContainer.innerHTML = '';
+                    res.data.forEach(item => {
+                        const itemName = item.extra ? item.extra.title : 'Item';
+                        const ptName = item.payment_type ? item.payment_type.name : 'Paid';
+                        const timeStr = item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                        
+                        const itemHtml = `
+                            <div class="p-2.5 rounded d-flex justify-content-between align-items-center mb-1" style="background-color: #000000 !important; border: 1.5px solid #333333 !important; color: #ffffff !important;">
+                                <div>
+                                    <div class="fw-bold" style="font-size: 0.88rem; color: #ffffff !important;">${itemName} <span class="fw-normal" style="color: #94a3b8 !important;">x ${item.quantity}</span></div>
+                                    <div class="fw-bold" style="font-size: 0.82rem; color: #fbbf24 !important;">Rs. ${Number(item.total_amount).toLocaleString()} <small class="fw-normal ms-1" style="color: #94a3b8 !important;">${timeStr}</small></div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 rounded-pill px-2.5 py-1" style="font-size: 0.72rem; letter-spacing: 0.3px;">${ptName}</span>
+                                </div>
+                            </div>
+                        `;
+                        listContainer.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                } else {
+                    if (countBadge) countBadge.textContent = '0';
+                    listContainer.innerHTML = `
+                        <div class="text-center py-5 rounded border" style="background-color: #000000 !important; border: 1.5px dashed #333333 !important; color: #94a3b8 !important; font-size: 0.85rem;">
+                            <div class="mb-2" style="font-size: 1.6rem;">🍿</div>
+                            <em>{{ __('No direct extras sold yet today.') }}</em>
+                        </div>
+                    `;
+                }
+            },
+            error: function() {
+                if (countBadge) countBadge.textContent = '0';
+                listContainer.innerHTML = `
+                    <div class="text-center py-5 rounded border" style="background-color: #000000 !important; border-color: #333333 !important; color: #94a3b8 !important; font-size: 0.85rem;">
+                        <div class="mb-2" style="font-size: 1.6rem;">🍿</div>
+                        <em>{{ __('No direct extras sold yet today.') }}</em>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function openSellExtraModal() {
+        const form = document.getElementById('sell-extra-form');
+        if (form) form.reset();
+        calculateSellExtraTotal();
+        loadRecentDirectSales();
+        
+        var sellExtraModal = new bootstrap.Modal(document.getElementById('sellExtraModal'));
+        sellExtraModal.show();
+    }
+
+    function submitSellExtra(event) {
+        event.preventDefault();
+        const extraId = document.getElementById('sell-extra-id').value;
+        const quantity = document.getElementById('sell-extra-quantity').value;
+        const paymentTypeId = document.getElementById('sell-extra-payment-type').value;
+
+        if (!extraId) {
+            alert("{{ __('Please select an extra item.') }}");
+            return;
+        }
+
+        const submitBtn = document.getElementById('btn-submit-sell-extra');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {{ __("Selling...") }}';
+        }
+
+        $.ajax({
+            url: "{{ route('skatepark.api.sell-extra') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                extra_id: extraId,
+                quantity: quantity,
+                payment_type_id: paymentTypeId
+            },
+            dataType: "json",
+            success: function(res) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '✓ {{ __("Sell Extra") }}';
+                }
+                if (res.success) {
+                    const modalEl = document.getElementById('sellExtraModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    } else {
+                        $('#sellExtraModal').modal('hide');
+                    }
+                    
+                    // Update daily total display if present
+                    if (typeof fetchDailyTotal === 'function' && typeof getTodayBS === 'function') {
+                        var todayBS = getTodayBS();
+                        if (todayBS) fetchDailyTotal(todayBS);
+                    }
+                }
+            },
+            error: function(err) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '✓ {{ __("Sell Extra") }}';
+                }
+                alert(err.responseJSON ? err.responseJSON.message : "Error selling extra");
             }
         });
     }
@@ -2433,17 +2870,58 @@
 
         var total = transactions.reduce(function(s, t) { return s + (parseFloat(t.amount) || 0); }, 0);
 
-        var submitBtn = document.getElementById('txn-submit-btn');
-        submitBtn.disabled = true;
-        var originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + "{{ __('Saving...') }}";
-
         var payload = {
             _token: "{{ csrf_token() }}",
             date_bs: dateBS,
             total: total,
             transactions: transactions
         };
+
+        // Check if entered total is less than the day's total shown after date BS label
+        var displayEl = document.getElementById('txn-daily-total-display');
+        var dailyTotal = 0;
+        if (displayEl) {
+            if (displayEl.dataset.dailyTotal !== undefined && displayEl.dataset.dailyTotal !== '') {
+                dailyTotal = parseFloat(displayEl.dataset.dailyTotal) || 0;
+            } else {
+                var match = displayEl.textContent.match(/[\d,.]+/);
+                if (match) {
+                    dailyTotal = parseFloat(match[0].replace(/,/g, '')) || 0;
+                }
+            }
+        }
+
+        if (dailyTotal > 0 && total < (dailyTotal - 0.01)) {
+            var diff = dailyTotal - total;
+            document.getElementById('warn-day-total').textContent = "Rs. " + dailyTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('warn-entered-total').textContent = "Rs. " + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('warn-diff-total').textContent = "- Rs. " + diff.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            var proceedBtn = document.getElementById('warn-proceed-save-btn');
+            proceedBtn.onclick = function() {
+                var warnModalEl = document.getElementById('txnWarningModal');
+                var warnModalInstance = bootstrap.Modal.getInstance(warnModalEl);
+                if (warnModalInstance) {
+                    warnModalInstance.hide();
+                } else {
+                    $('#txnWarningModal').modal('hide');
+                }
+                executeSaveTransaction(payload);
+            };
+
+            var warnModal = new bootstrap.Modal(document.getElementById('txnWarningModal'));
+            warnModal.show();
+            return;
+        }
+
+        executeSaveTransaction(payload);
+    });
+
+    function executeSaveTransaction(payload) {
+        var submitBtn = document.getElementById('txn-submit-btn');
+        submitBtn.disabled = true;
+        var originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + "{{ __('Saving...') }}";
 
         $.ajax({
             url: "{{ route('transactions.store') }}",
@@ -2471,7 +2949,7 @@
                 alert(errMsg);
             }
         });
-    });
+    }
 
     // ── Datepicker + modal events ──────────────────────────────────
     // window 'load' fires AFTER all external scripts (jQuery, nepali datepicker CDN)
@@ -2492,18 +2970,22 @@
             var displayEl = document.getElementById('txn-daily-total-display');
             displayEl.classList.remove('d-none');
             displayEl.textContent = '...';
+            displayEl.dataset.dailyTotal = '';
             
             $.ajax({
                 url: "{{ route('skatepark.api.daily-total') }}",
                 data: { date_bs: dateBS },
                 success: function(res) {
                     if (res.total !== undefined) {
+                        displayEl.dataset.dailyTotal = res.total;
                         displayEl.textContent = "Total: Rs. " + Number(res.total).toFixed(2);
                     } else {
+                        displayEl.dataset.dailyTotal = '0';
                         displayEl.textContent = "Error";
                     }
                 },
                 error: function() {
+                    displayEl.dataset.dailyTotal = '0';
                     displayEl.textContent = "Error";
                 }
             });
@@ -2529,7 +3011,19 @@
 
         txnModal.addEventListener('hidden.bs.modal', function() {
             initTxnModal();
-            document.getElementById('txn-daily-total-display').classList.add('d-none');
+            var displayEl = document.getElementById('txn-daily-total-display');
+            displayEl.classList.add('d-none');
+            displayEl.dataset.dailyTotal = '0';
+        });
+
+        // Ensure multi-modal backdrop z-index and focus handling
+        $('#txnWarningModal').on('shown.bs.modal', function() {
+            $('.modal-backdrop').last().css('z-index', 1070);
+        });
+        $('#txnWarningModal').on('hidden.bs.modal', function() {
+            if ($('#addTransactionModal').hasClass('show')) {
+                $('body').addClass('modal-open');
+            }
         });
     });
 </script>

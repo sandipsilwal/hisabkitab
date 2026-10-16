@@ -1,6 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    /* Yellow border styling for skatepark total mismatch */
+    tr.row-mismatch > td,
+    tr.row-mismatch > th,
+    body.dark-mode tr.row-mismatch > td,
+    body.dark-mode tr.row-mismatch > th,
+    body.dark-mode .table tr.row-mismatch > td,
+    body.dark-mode .table-striped > tbody > tr.row-mismatch > *,
+    body.dark-mode .table-striped > tbody > tr.row-mismatch > td,
+    .border-mismatch-yellow {
+        border-top: 2.5px solid #facc15 !important;
+        border-bottom: 2.5px solid #facc15 !important;
+        border-left: 2px solid #facc15 !important;
+        border-right: 2px solid #facc15 !important;
+    }
+</style>
 <div class="row">
     <div class="col-12">
         <h1 class="mb-4">Transactions</h1>
@@ -31,6 +47,9 @@
                 </div>
                 <div class="col-md-6 align-self-end">
                     <span class="btn btn-sm total_bg" style="float: right;"><b>Total Amount: {{ number_format($day_total_amount, 2) }}</b></span>
+                    <span class="badge text-dark py-2 px-2.5 me-2" style="font-size: 0.8rem; float: right; background-color: #fef08a; border: 1.5px solid #facc15;">
+                        ⚠️ {{ __('Yellow Border = Transaction total is less than Skatepark records') }}
+                    </span>
                 </div>
             </div>
         </form>
@@ -48,20 +67,29 @@
             </thead>
             <tbody>
                 @foreach ($days as $day)
-                    <tr>
-                        <td class="day_bg text-white" rowspan="{{count($day->transactions)}}">{{ $day->date_bs }}</td>
-                        <td class="day_bg text-white" rowspan="{{count($day->transactions)}}">{{ $day->total }}</td>
+                    @php
+                        $isMismatch = !empty($day->has_skatepark_discrepancy);
+                        $cellBorderStyle = $isMismatch ? 'border-top: 2.5px solid #facc15 !important; border-bottom: 2.5px solid #facc15 !important; border-left: 2px solid #facc15 !important; border-right: 2px solid #facc15 !important;' : '';
+                    @endphp
+                    <tr class="{{ $isMismatch ? 'row-mismatch' : '' }}">
+                        <td class="day_bg text-white" rowspan="{{ max(count($day->transactions), 1) }}" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>{{ $day->date_bs }}</td>
+                        <td class="day_bg text-white" rowspan="{{ max(count($day->transactions), 1) }}" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif @if($isMismatch) title="{{ __('Expected Skatepark Total: Rs. :expected (Entered: Rs. :entered)', ['expected' => number_format($day->expected_skatepark_total, 2), 'entered' => number_format($day->date_total_transactions ?? $day->total, 2)]) }}" @endif>
+                            {{ $day->total }}
+                            @if($isMismatch)
+                                <div style="font-size: 0.68rem; font-weight: normal; opacity: 0.9;">⚠️ (Exp: {{ number_format($day->expected_skatepark_total, 2) }})</div>
+                            @endif
+                        </td>
                         @foreach ($day->transactions as $key => $transaction)
                             @if($key!=0)
-                                <tr>
+                                <tr class="{{ $isMismatch ? 'row-mismatch' : '' }}">
                             @endif
-                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center">{{ $transaction->toAccount->name }}</td>
-                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center">{{ $transaction->amount }}</td>
-                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center">{{ $transaction->remarks }}</td>
-                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center">{{ $transaction->is_posted ? 'Posted' : 'Unposted' }}</td>
-                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center">
+                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>{{ $transaction->toAccount->name }}</td>
+                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>{{ $transaction->amount }}</td>
+                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>{{ $transaction->remarks }}</td>
+                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>{{ $transaction->is_posted ? 'Posted' : 'Unposted' }}</td>
+                                <td class="{{ $transaction->is_posted ? '' : 'bg-red' }} text-center" @if($cellBorderStyle) style="{{ $cellBorderStyle }}" @endif>
                                     @if (!$transaction->is_posted)
-                                        <a href="{{ route('transactions.edit', $transaction) }}" class="btn btn-sm btn-warning text-white">Edit</a>
+                                        <a href="{{ route('transactions.edit', $transaction) }}" class="btn btn-sm btn-warning text-white me-1">Edit</a>
                                         <form action="{{ route('transactions.post', $transaction) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">Post</button>
@@ -90,7 +118,7 @@
         </table>
     </div>
     <div class="justify-content-center">
-        {{ $transactions->links('pagination::bootstrap-5') }}
+        {{ $days->links('pagination::bootstrap-5') }}
     </div>
 </div>
 @endsection

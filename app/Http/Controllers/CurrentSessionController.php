@@ -10,13 +10,18 @@ use App\Models\DefaultTime;
 use App\Models\PaymentType;
 use App\Models\PlayerPackage;
 use App\Models\Rate;
+use App\Traits\DateFilterTrait;
+use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class CurrentSessionController extends Controller
 {
+    use DateFilterTrait;
+
     /**
      * Display the current session dashboard.
      */
@@ -209,6 +214,54 @@ class CurrentSessionController extends Controller
     }
 
     /**
+     * AJAX endpoint to sell an extra directly (without play record).
+     */
+    public function sellExtra(Request $request)
+    {
+        $request->validate([
+            'extra_id' => 'required|exists:extras,id',
+            'quantity' => 'required|integer|min:1',
+            'payment_type_id' => 'required|exists:payment_types,id',
+        ]);
+
+        $extra = \App\Models\Extra::findOrFail($request->extra_id);
+        $totalAmount = $extra->amount * $request->quantity;
+
+        $playRecordExtra = \App\Models\PlayRecordExtra::create([
+            'play_record_id' => null,
+            'extra_id' => $request->extra_id,
+            'quantity' => $request->quantity,
+            'total_amount' => $totalAmount,
+            'payment_type_id' => $request->payment_type_id,
+            'status' => 'Paid'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Extra sold successfully!'),
+            'data' => $playRecordExtra->load(['extra', 'paymentType'])
+        ]);
+    }
+
+    /**
+     * AJAX endpoint to fetch recent direct extra sales today.
+     */
+    public function recentExtraSales()
+    {
+        $sales = \App\Models\PlayRecordExtra::whereNull('play_record_id')
+            ->whereDate('created_at', Carbon::today())
+            ->with(['extra', 'paymentType'])
+            ->orderBy('id', 'desc')
+            ->take(20)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $sales
+        ]);
+    }
+
+    /**
      * AJAX endpoint to start the time counter for a play record.
      */
     public function startPlayRecord(PlayRecord $playRecord)
@@ -272,16 +325,28 @@ class CurrentSessionController extends Controller
 
         DB::beginTransaction();
         try {
-            $playRecord->update([
+            $updateData = [
                 'end_time' => $endTime,
                 'actual_time' => $actualTimeMinutes,
                 'amount' => $amount
-            ]);
+            ];
+
+            if ($request->filled('payment_type_id')) {
+                $updateData['payment_type_id'] = $request->input('payment_type_id');
+            }
+
+            $playRecord->update($updateData);
 
             if ($request->boolean('mark_extras_paid')) {
+                $extraUpdate = ['status' => 'Paid'];
+                if ($request->filled('extra_payment_type_id')) {
+                    $extraUpdate['payment_type_id'] = $request->input('extra_payment_type_id');
+                } elseif ($request->filled('payment_type_id')) {
+                    $extraUpdate['payment_type_id'] = $request->input('payment_type_id');
+                }
                 \App\Models\PlayRecordExtra::where('play_record_id', $playRecord->id)
                     ->where('status', 'Not Paid')
-                    ->update(['status' => 'Paid']);
+                    ->update($extraUpdate);
             }
 
             // If it is a package play record, accumulate total actual time and check for package completion
@@ -412,15 +477,33 @@ class CurrentSessionController extends Controller
      */
     public function report(Request $request)
     {
-        $from = $request->input('from', Carbon::today()->toDateString());
-        $to   = $request->input('to',   Carbon::today()->toDateString());
+        [$from, $to, $filter_date_range] = $this->resolveNepaliDateRange($request);
+
+        if (!$from || !$to) {
+            if ($request->filled('from') && $request->filled('to')) {
+                $from = $request->input('from');
+                $to   = $request->input('to');
+                try {
+                    $fromBS = LaravelNepaliDate::from($from)->toNepaliDate();
+                    $toBS   = LaravelNepaliDate::from($to)->toNepaliDate();
+                    $filter_date_range = "$fromBS - $toBS";
+                } catch (\Exception $e) {
+                    $filter_date_range = '';
+                }
+            } else {
+                $todayBS = LaravelNepaliDate::from(now())->toNepaliDate();
+                $filter_date_range = "$todayBS - $todayBS";
+                $from = Carbon::today()->toDateString();
+                $to   = Carbon::today()->toDateString();
+            }
+        }
 
         $fromDt = Carbon::parse($from)->startOfDay();
         $toDt   = Carbon::parse($to)->endOfDay();
 
         $records = PlayRecord::whereNotNull('end_time')
             ->whereBetween('end_time', [$fromDt, $toDt])
-            ->with(['token.gameType', 'gameType', 'paymentType', 'playerPackage.player'])
+            ->with(['token.gameType', 'gameType', 'paymentType', 'playerPackage.player', 'playRecordExtras.extra', 'playRecordExtras.paymentType'])
             ->orderBy('end_time', 'desc')
             ->get();
 
@@ -432,14 +515,12 @@ class CurrentSessionController extends Controller
         $packagePaymentsTotal = $packagePayments->sum('amount');
 
         // Summary aggregates
-        $totalSessions    = $records->count();
-        $totalPlayers     = $records->sum('no_of_players');
-        $totalMinutes     = $records->sum('actual_time');
-        $normalCount      = $records->where('player_type', 'normal')->count();
-        $packageCount     = $records->where('player_type', 'package')->count();
-        $normalRevenue    = $records->where('player_type', 'normal')->sum('amount');
-        
-        $totalRevenue     = $normalRevenue + $packagePaymentsTotal;
+        $totalSessions       = $records->count();
+        $totalPlayers        = $records->sum('no_of_players');
+        $totalMinutes        = $records->sum('actual_time');
+        $normalCount         = $records->where('player_type', 'normal')->count();
+        $packageCount        = $records->where('player_type', 'package')->count();
+        $playRecordsEarnings = $records->where('player_type', 'normal')->sum('amount');
 
         // Revenue breakdown by payment type
         $paymentBreakdown = $records
@@ -447,17 +528,22 @@ class CurrentSessionController extends Controller
             ->groupBy(fn($r) => optional($r->paymentType)->name ?? 'Unknown')
             ->map(fn($g) => $g->sum('amount'));
 
-        // Load Paid Extras to add to totals
-        $paidExtras = \App\Models\PlayRecordExtra::with('paymentType')
-            ->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
-                $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+        // Load Paid Extras to add to totals (session extras + standalone direct sales)
+        $paidExtras = \App\Models\PlayRecordExtra::with(['extra', 'paymentType', 'playRecord.playerPackage.player', 'playRecord.token'])
+            ->where(function($query) use ($fromDt, $toDt) {
+                $query->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
+                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                })->orWhere(function($q) use ($fromDt, $toDt) {
+                    $q->whereNull('play_record_id')->whereBetween('created_at', [$fromDt, $toDt]);
+                });
             })
             ->where('status', 'Paid')
+            ->orderBy('id', 'desc')
             ->get();
             
-        $extrasTotal = $paidExtras->sum('total_amount');
-        $totalRevenue += $extrasTotal;
-        $normalRevenue += $extrasTotal;
+        $extrasTotal   = $paidExtras->sum('total_amount');
+        $normalRevenue = $playRecordsEarnings + $extrasTotal;
+        $totalRevenue  = $normalRevenue + $packagePaymentsTotal;
 
         foreach($paidExtras as $extra) {
             $pName = optional($extra->paymentType)->name ?? 'Unknown';
@@ -473,6 +559,7 @@ class CurrentSessionController extends Controller
             'packagePaymentsTotal',
             'from',
             'to',
+            'filter_date_range',
             'totalRevenue',
             'totalSessions',
             'totalPlayers',
@@ -480,6 +567,9 @@ class CurrentSessionController extends Controller
             'normalCount',
             'packageCount',
             'normalRevenue',
+            'playRecordsEarnings',
+            'paidExtras',
+            'extrasTotal',
             'paymentBreakdown'
         ));
     }
@@ -545,8 +635,12 @@ class CurrentSessionController extends Controller
             $packagePaymentsTotal = \App\Models\PlayerPackagePaymentHistory::whereBetween('date', [$fromDt, $toDt])
                 ->sum('amount');
 
-            $extrasTotal = \App\Models\PlayRecordExtra::whereHas('playRecord', function($q) use ($fromDt, $toDt) {
-                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+            $extrasTotal = \App\Models\PlayRecordExtra::where(function($query) use ($fromDt, $toDt) {
+                    $query->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
+                        $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                    })->orWhere(function($q) use ($fromDt, $toDt) {
+                        $q->whereNull('play_record_id')->whereBetween('created_at', [$fromDt, $toDt]);
+                    });
                 })
                 ->where('status', 'Paid')
                 ->sum('total_amount');
