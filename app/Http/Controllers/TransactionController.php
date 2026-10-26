@@ -62,22 +62,22 @@ class TransactionController extends Controller
             $toDt   = Carbon::parse($maxDate)->endOfDay();
 
             // 1. Play records normal player revenue by date
-            $playRecordsByDate = PlayRecord::whereNotNull('end_time')
-                ->whereBetween('end_time', [$fromDt, $toDt])
+            $playRecordsByDate = PlayRecord::whereNotNull('start_time')
+                ->whereBetween('start_time', [$fromDt, $toDt])
                 ->where('player_type', 'normal')
-                ->selectRaw('DATE(end_time) as date, SUM(amount) as total_amount')
-                ->groupBy(DB::raw('DATE(end_time)'))
+                ->selectRaw('DATE(start_time) as date, SUM(amount) as total_amount')
+                ->groupBy(DB::raw('DATE(start_time)'))
                 ->pluck('total_amount', 'date');
 
             // 2. Play record extras linked to play records
             $sessionExtrasByDate = PlayRecordExtra::whereNotNull('play_record_id')
                 ->where('status', 'Paid')
                 ->whereHas('playRecord', function ($q) use ($fromDt, $toDt) {
-                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                    $q->whereNotNull('start_time')->whereBetween('start_time', [$fromDt, $toDt]);
                 })
                 ->join('play_records', 'play_record_extras.play_record_id', '=', 'play_records.id')
-                ->selectRaw('DATE(play_records.end_time) as date, SUM(play_record_extras.total_amount) as total_amount')
-                ->groupBy(DB::raw('DATE(play_records.end_time)'))
+                ->selectRaw('DATE(play_records.start_time) as date, SUM(play_record_extras.total_amount) as total_amount')
+                ->groupBy(DB::raw('DATE(play_records.start_time)'))
                 ->pluck('total_amount', 'date');
 
             // 3. Standalone direct extra sales

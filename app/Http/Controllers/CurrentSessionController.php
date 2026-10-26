@@ -501,10 +501,10 @@ class CurrentSessionController extends Controller
         $fromDt = Carbon::parse($from)->startOfDay();
         $toDt   = Carbon::parse($to)->endOfDay();
 
-        $records = PlayRecord::whereNotNull('end_time')
-            ->whereBetween('end_time', [$fromDt, $toDt])
+        $records = PlayRecord::whereNotNull('start_time')
+            ->whereBetween('start_time', [$fromDt, $toDt])
             ->with(['token.gameType', 'gameType', 'paymentType', 'playerPackage.player', 'playRecordExtras.extra', 'playRecordExtras.paymentType'])
-            ->orderBy('end_time', 'desc')
+            ->orderBy('start_time', 'desc')
             ->get();
 
         // Package Payments
@@ -532,7 +532,7 @@ class CurrentSessionController extends Controller
         $paidExtras = \App\Models\PlayRecordExtra::with(['extra', 'paymentType', 'playRecord.playerPackage.player', 'playRecord.token'])
             ->where(function($query) use ($fromDt, $toDt) {
                 $query->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
-                    $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                    $q->whereNotNull('start_time')->whereBetween('start_time', [$fromDt, $toDt]);
                 })->orWhere(function($q) use ($fromDt, $toDt) {
                     $q->whereNull('play_record_id')->whereBetween('created_at', [$fromDt, $toDt]);
                 });
@@ -627,8 +627,8 @@ class CurrentSessionController extends Controller
             $fromDt = $dt->copy()->startOfDay();
             $toDt   = $dt->copy()->endOfDay();
 
-            $normalRevenue = PlayRecord::whereNotNull('end_time')
-                ->whereBetween('end_time', [$fromDt, $toDt])
+            $normalRevenue = PlayRecord::whereNotNull('start_time')
+                ->whereBetween('start_time', [$fromDt, $toDt])
                 ->where('player_type', 'normal')
                 ->sum('amount');
                 
@@ -637,7 +637,7 @@ class CurrentSessionController extends Controller
 
             $extrasTotal = \App\Models\PlayRecordExtra::where(function($query) use ($fromDt, $toDt) {
                     $query->whereHas('playRecord', function($q) use ($fromDt, $toDt) {
-                        $q->whereNotNull('end_time')->whereBetween('end_time', [$fromDt, $toDt]);
+                        $q->whereNotNull('start_time')->whereBetween('start_time', [$fromDt, $toDt]);
                     })->orWhere(function($q) use ($fromDt, $toDt) {
                         $q->whereNull('play_record_id')->whereBetween('created_at', [$fromDt, $toDt]);
                     });

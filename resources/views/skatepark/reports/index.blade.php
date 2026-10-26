@@ -383,7 +383,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 no-print">
     <div>
         <h4 class="fw-bold mb-0" style="color: #0f172a;">📊 {{ __('Play Records Report') }}</h4>
-        <p class="text-muted mb-0" style="font-size: 0.82rem;">{{ __('Showing completed sessions for') }} {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &mdash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }} @if(!empty($filter_date_range)) <span class="badge bg-secondary ms-1">{{ $filter_date_range }}</span> @endif</p>
+        <p class="text-muted mb-0" style="font-size: 0.82rem;">{{ __('Showing sessions for') }} {{ \Carbon\Carbon::parse($from)->format('M d, Y') }} &mdash; {{ \Carbon\Carbon::parse($to)->format('M d, Y') }} @if(!empty($filter_date_range)) <span class="badge bg-secondary ms-1">{{ $filter_date_range }}</span> @endif</p>
     </div>
     <div class="page-header-actions">
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm fw-semibold" style="border-radius: 8px; font-size: 0.8rem;">
@@ -558,7 +558,7 @@
     @if($records->isEmpty())
         <div class="text-center py-5 text-muted">
             <div style="font-size: 2.5rem;">📭</div>
-            <div class="fw-semibold mt-2">{{ __('No completed sessions found for this period.') }}</div>
+            <div class="fw-semibold mt-2">{{ __('No sessions found for this period.') }}</div>
             <div style="font-size: 0.82rem;">{{ __('Try adjusting the date range.') }}</div>
         </div>
     @else
