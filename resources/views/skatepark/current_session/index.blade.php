@@ -2186,10 +2186,10 @@
                     : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">Not Paid</span>';
                 
                 const itemHtml = `
-                    <div class="p-2 border rounded d-flex justify-content-between align-items-center" style="background-color: #f8fafc;">
+                    <div class="p-2 border border-secondary rounded d-flex justify-content-between align-items-center" style="background-color: #000000; color: #ffffff;">
                         <div>
-                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">${itemName} <span class="text-secondary fw-normal">x ${extra.quantity}</span></div>
-                            <div class="text-muted fw-bold" style="font-size: 0.8rem;">Rs. ${extra.total_amount}</div>
+                            <div class="fw-bold text-white" style="font-size: 0.85rem; color: #ffffff !important;">${itemName} <span class="fw-normal" style="color: #e2e8f0;">x ${extra.quantity}</span></div>
+                            <div class="fw-bold text-white" style="font-size: 0.8rem; color: #ffffff !important;">Rs. ${extra.total_amount}</div>
                         </div>
                         <div>
                             ${statusBadge}
@@ -2200,7 +2200,7 @@
             });
         } else {
             listContainer.innerHTML = `
-                <div class="text-center py-5 text-muted bg-light rounded border" style="font-size: 0.85rem;">
+                <div class="text-center py-5 rounded border border-secondary text-white" style="font-size: 0.85rem; background-color: #000000; color: #ffffff !important;">
                     <em>{{ __('No extras added yet.') }}</em>
                 </div>
             `;
