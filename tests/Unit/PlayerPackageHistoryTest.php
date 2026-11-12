@@ -185,6 +185,10 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertStringContainsString("route('player_packages.history'", $currentSessionSource);
         $this->assertStringContainsString("route('player_packages.deactivate'", $currentSessionSource);
         $this->assertStringContainsString('confirmDeactivatePlayerPackage', $currentSessionSource);
+        $this->assertStringContainsString('header-date-ad', $currentSessionSource);
+        $this->assertStringContainsString('header-date-bs', $currentSessionSource);
+        $this->assertStringContainsString('syncBsFromAd', $currentSessionSource);
+        $this->assertStringContainsString('syncAdFromBs', $currentSessionSource);
         $this->assertStringContainsString("@include('skatepark.players._history_modal')", $currentSessionSource);
     }
 }
