@@ -6,6 +6,7 @@ use App\Models\PlayerPackage;
 use App\Models\Package;
 use App\Models\Player;
 use App\Models\PlayRecord;
+use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -112,12 +113,42 @@ class PlayerPackageController extends Controller
         }
 
         $validated = $request->validate([
-            'start_time' => 'required|date',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
+            'start_date_bs' => 'required|string',
+            'start_time' => 'required|date_format:H:i',
+            'end_date_bs' => 'nullable|string|required_with:end_time',
+            'end_time' => 'nullable|date_format:H:i|required_with:end_date_bs',
         ]);
 
-        $startTime = Carbon::parse($validated['start_time']);
-        $endTime = !empty($validated['end_time']) ? Carbon::parse($validated['end_time']) : null;
+        try {
+            $startEnglishDate = LaravelNepaliDate::from(trim($validated['start_date_bs']))->toEnglishDate();
+            $startTime = Carbon::parse($startEnglishDate . ' ' . $validated['start_time']);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Invalid start Nepali date or time.'),
+            ], 422);
+        }
+
+        $endTime = null;
+        if (!empty($validated['end_date_bs']) && !empty($validated['end_time'])) {
+            try {
+                $endEnglishDate = LaravelNepaliDate::from(trim($validated['end_date_bs']))->toEnglishDate();
+                $endTime = Carbon::parse($endEnglishDate . ' ' . $validated['end_time']);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Invalid end Nepali date or time.'),
+                ], 422);
+            }
+
+            if ($endTime->lt($startTime)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('End date and time must be after or equal to start date and time.'),
+                ], 422);
+            }
+        }
+
         $actualMinutes = $endTime ? PlayRecord::calculateDurationMinutes($startTime, $endTime) : null;
 
         $playRecord->update([

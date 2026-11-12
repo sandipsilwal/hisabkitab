@@ -1,6 +1,9 @@
 <!-- Modal: View Package & Play History -->
 <style>
-    body.dark-mode #viewHistoryModal input[type="datetime-local"] {
+    .ndp-container {
+        z-index: 1100 !important;
+    }
+    body.dark-mode #viewHistoryModal input[type="time"] {
         color-scheme: dark;
     }
 </style>
@@ -65,12 +68,15 @@
         remarks: @json(__('Remarks')),
         actions: @json(__('Actions')),
         editTime: @json(__('Edit Time')),
-        startDateTime: @json(__('Start Date & Time')),
-        endDateTime: @json(__('End Date & Time')),
+        startDateBs: @json(__('Start Date (BS)')),
+        startTimeInput: @json(__('Start Time')),
+        endDateBs: @json(__('End Date (BS)')),
+        endTimeInput: @json(__('End Time')),
         save: @json(__('Save')),
         saving: @json(__('Saving...')),
         cancel: @json(__('Cancel')),
-        startRequired: @json(__('Start date and time is required.')),
+        startRequired: @json(__('Start Nepali date and start time are required.')),
+        endPairRequired: @json(__('Please provide both end Nepali date and end time, or leave both empty.')),
         endAfterStart: @json(__('End date and time must be after or equal to start date and time.')),
         updateFailed: @json(__('Failed to update play record time.')),
     };
@@ -141,25 +147,33 @@
                 <tr id="edit-record-row-${rec.id}" class="d-none bg-light">
                     <td colspan="10" class="p-3">
                         <div class="row g-2 align-items-end">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold mb-1" for="edit-start-time-${rec.id}">${escapeHtml(HISTORY_LABELS.startDateTime)}</label>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label small fw-semibold mb-1" for="edit-start-date-bs-${rec.id}">${escapeHtml(HISTORY_LABELS.startDateBs)}</label>
+                                <input type="text" class="form-control form-control-sm history-nepali-datepicker" id="edit-start-date-bs-${rec.id}" value="${escapeHtml(rec.start_date_bs || '')}" placeholder="YYYY-MM-DD" autocomplete="off" required>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small fw-semibold mb-1" for="edit-start-time-${rec.id}">${escapeHtml(HISTORY_LABELS.startTimeInput)}</label>
                                 <div class="input-group input-group-sm">
-                                    <input type="datetime-local" class="form-control form-control-sm" id="edit-start-time-${rec.id}" value="${escapeHtml(rec.start_time_input || '')}" required>
-                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.startDateTime)}" onclick="openDateTimePicker('edit-start-time-${rec.id}')">📅</button>
+                                    <input type="time" class="form-control form-control-sm" id="edit-start-time-${rec.id}" value="${escapeHtml(rec.start_time_only || '')}" required>
+                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.startTimeInput)}" onclick="openTimePicker('edit-start-time-${rec.id}')">🕒</button>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold mb-1" for="edit-end-time-${rec.id}">${escapeHtml(HISTORY_LABELS.endDateTime)}</label>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label small fw-semibold mb-1" for="edit-end-date-bs-${rec.id}">${escapeHtml(HISTORY_LABELS.endDateBs)}</label>
+                                <input type="text" class="form-control form-control-sm history-nepali-datepicker" id="edit-end-date-bs-${rec.id}" value="${escapeHtml(rec.end_date_bs || '')}" placeholder="YYYY-MM-DD" autocomplete="off">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small fw-semibold mb-1" for="edit-end-time-${rec.id}">${escapeHtml(HISTORY_LABELS.endTimeInput)}</label>
                                 <div class="input-group input-group-sm">
-                                    <input type="datetime-local" class="form-control form-control-sm" id="edit-end-time-${rec.id}" value="${escapeHtml(rec.end_time_input || '')}">
-                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.endDateTime)}" onclick="openDateTimePicker('edit-end-time-${rec.id}')">📅</button>
+                                    <input type="time" class="form-control form-control-sm" id="edit-end-time-${rec.id}" value="${escapeHtml(rec.end_time_only || '')}">
+                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.endTimeInput)}" onclick="openTimePicker('edit-end-time-${rec.id}')">🕒</button>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex gap-2">
+                            <div class="col-12 col-md-2 d-flex gap-2">
                                 <button type="button" class="btn btn-sm btn-primary fw-semibold px-3" id="save-record-btn-${rec.id}" onclick="savePlayRecordTimes(${rec.id})">
                                     ${escapeHtml(HISTORY_LABELS.save)}
                                 </button>
-                                <button type="button" class="btn btn-sm btn-secondary px-3" onclick="toggleEditPlayRecordTimes(${rec.id}, false)">
+                                <button type="button" class="btn btn-sm btn-secondary px-2" onclick="toggleEditPlayRecordTimes(${rec.id}, false)">
                                     ${escapeHtml(HISTORY_LABELS.cancel)}
                                 </button>
                             </div>
@@ -299,7 +313,35 @@
         }
     }
 
-    window.openDateTimePicker = function (inputId) {
+    function initHistoryNepaliDatePickers(containerEl) {
+        if (!containerEl) return;
+        containerEl.querySelectorAll('.history-nepali-datepicker').forEach(function (input) {
+            if (input.classList.contains('nepali-datepicker-initialized')) return;
+            const currentVal = input.value || '';
+            try {
+                if (typeof window.jQuery !== 'undefined' && typeof jQuery.fn.nepaliDatePicker === 'function') {
+                    jQuery(input).nepaliDatePicker({
+                        language: 'english',
+                        value: currentVal
+                    });
+                    input.classList.add('nepali-datepicker-initialized');
+                } else if (typeof input.NepaliDatePicker === 'function') {
+                    input.NepaliDatePicker({
+                        language: 'english',
+                        value: currentVal
+                    });
+                    input.classList.add('nepali-datepicker-initialized');
+                }
+                if (currentVal && !input.value) {
+                    input.value = currentVal;
+                }
+            } catch (e) {
+                console.error('Failed to initialize Nepali datepicker in history modal:', e);
+            }
+        });
+    }
+
+    window.openTimePicker = function (inputId) {
         const input = document.getElementById(inputId);
         if (!input) return;
         input.focus();
@@ -322,6 +364,9 @@
             : editRow.classList.contains('d-none');
 
         editRow.classList.toggle('d-none', !shouldShow);
+        if (shouldShow) {
+            initHistoryNepaliDatePickers(editRow);
+        }
         if (errorEl) {
             errorEl.textContent = '';
             errorEl.classList.add('d-none');
@@ -329,8 +374,10 @@
     };
 
     window.savePlayRecordTimes = async function (recordId) {
-        const startInput = document.getElementById(`edit-start-time-${recordId}`);
-        const endInput = document.getElementById(`edit-end-time-${recordId}`);
+        const startDateInput = document.getElementById(`edit-start-date-bs-${recordId}`);
+        const startTimeInput = document.getElementById(`edit-start-time-${recordId}`);
+        const endDateInput = document.getElementById(`edit-end-date-bs-${recordId}`);
+        const endTimeInput = document.getElementById(`edit-end-time-${recordId}`);
         const errorEl = document.getElementById(`edit-record-error-${recordId}`);
         const saveBtn = document.getElementById(`save-record-btn-${recordId}`);
 
@@ -341,16 +388,24 @@
             }
         };
 
-        const startVal = startInput ? startInput.value.trim() : '';
-        const endVal = endInput ? endInput.value.trim() : '';
+        const startDateBs = startDateInput ? startDateInput.value.trim() : '';
+        const startTimeVal = startTimeInput ? startTimeInput.value.trim() : '';
+        const endDateBs = endDateInput ? endDateInput.value.trim() : '';
+        const endTimeVal = endTimeInput ? endTimeInput.value.trim() : '';
 
-        if (!startVal) {
+        if (!startDateBs || !startTimeVal) {
             showError(HISTORY_LABELS.startRequired);
             return;
         }
-        if (endVal && new Date(endVal) < new Date(startVal)) {
-            showError(HISTORY_LABELS.endAfterStart);
+        if ((endDateBs && !endTimeVal) || (!endDateBs && endTimeVal)) {
+            showError(HISTORY_LABELS.endPairRequired);
             return;
+        }
+        if (endDateBs && endTimeVal) {
+            if (endDateBs < startDateBs || (endDateBs === startDateBs && endTimeVal < startTimeVal)) {
+                showError(HISTORY_LABELS.endAfterStart);
+                return;
+            }
         }
 
         if (errorEl) {
@@ -374,8 +429,10 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    start_time: startVal,
-                    end_time: endVal || null
+                    start_date_bs: startDateBs,
+                    start_time: startTimeVal,
+                    end_date_bs: endDateBs || null,
+                    end_time: endTimeVal || null
                 })
             });
 
@@ -451,6 +508,10 @@
         });
 
         historyModalEl.addEventListener('hidden.bs.modal', function () {
+            document.querySelectorAll('.ndp-container').forEach(function (el) {
+                el.style.display = 'none';
+            });
+
             suspendedFocusTraps.forEach(function (trap) {
                 try {
                     trap.activate();

@@ -108,6 +108,8 @@ class PlayerPackage extends Model
                 $status = $rec->end_time ? 'completed' : ($rec->start_time ? 'playing' : 'pending');
 
                 $recordDate = $rec->start_time ?? $rec->created_at;
+                $startDateBs = $rec->start_time ? self::formatNepaliDate($rec->start_time) : '';
+                $endDateBs = $rec->end_time ? self::formatNepaliDate($rec->end_time) : '';
 
                 return [
                     'id' => $rec->id,
@@ -117,8 +119,10 @@ class PlayerPackage extends Model
                     'game_type' => $rec->gameType?->game_name ?? $package?->gameType?->game_name ?? '—',
                     'start_time' => $rec->start_time?->format('h:i A') ?? '—',
                     'end_time' => $rec->end_time?->format('h:i A') ?? '—',
-                    'start_time_input' => $rec->start_time?->format('Y-m-d\TH:i') ?? '',
-                    'end_time_input' => $rec->end_time?->format('Y-m-d\TH:i') ?? '',
+                    'start_date_bs' => $startDateBs !== '—' ? $startDateBs : '',
+                    'start_time_only' => $rec->start_time?->format('H:i') ?? '',
+                    'end_date_bs' => $endDateBs !== '—' ? $endDateBs : '',
+                    'end_time_only' => $rec->end_time?->format('H:i') ?? '',
                     'actual_time' => $actualMinutes,
                     'actual_time_formatted' => $actualMinutes !== null
                         ? ($actualMinutes >= 60 ? self::formatHoursMinutes($actualMinutes) : $actualMinutes . 'm')

@@ -92,8 +92,10 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertSame(PlayerPackage::formatNepaliDate(Carbon::parse('2026-11-02')), $history['play_records'][0]['date_bs']);
         $this->assertNotSame('—', $history['play_records'][0]['date_bs']);
         $this->assertSame(PlayerPackage::formatNepaliDate(Carbon::parse('2026-11-01')), $history['purchased_date_bs']);
-        $this->assertSame('2026-11-02T10:00', $history['play_records'][0]['start_time_input']);
-        $this->assertSame('2026-11-02T11:00', $history['play_records'][0]['end_time_input']);
+        $this->assertSame(PlayerPackage::formatNepaliDate(Carbon::parse('2026-11-02')), $history['play_records'][0]['start_date_bs']);
+        $this->assertSame('10:00', $history['play_records'][0]['start_time_only']);
+        $this->assertSame(PlayerPackage::formatNepaliDate(Carbon::parse('2026-11-02')), $history['play_records'][0]['end_date_bs']);
+        $this->assertSame('11:00', $history['play_records'][0]['end_time_only']);
         $this->assertSame('1h 0m', $history['play_records'][0]['actual_time_formatted']);
         $this->assertSame('completed', $history['play_records'][0]['status']);
     }
@@ -163,7 +165,8 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertStringContainsString('Total Days Played', $modalHtml);
         $this->assertStringContainsString('Remaining Days', $modalHtml);
         $this->assertStringContainsString('Remaining Hours', $modalHtml);
-        $this->assertStringContainsString('datetime-local', $modalHtml);
+        $this->assertStringContainsString('history-nepali-datepicker', $modalHtml);
+        $this->assertStringContainsString('type="time"', $modalHtml);
         $this->assertStringContainsString('savePlayRecordTimes', $modalHtml);
         $this->assertStringContainsString('toggleEditPlayRecordTimes', $modalHtml);
         $this->assertStringContainsString('pkg.play_records.length - i', $modalHtml);
