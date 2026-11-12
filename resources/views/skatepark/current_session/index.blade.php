@@ -264,18 +264,7 @@
 
     /* Nepali datepicker calendar must appear above Bootstrap modals (z-index: 1055) */
     .ndp-container {
-        z-index: 1100 !important;
-    }
-    body.dark-mode #header-date-ad {
-        color-scheme: dark;
-    }
-    .header-date-converter-card {
-        border-radius: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-    }
-    body.dark-mode .header-date-converter-card {
-        background-color: #121212 !important;
-        border-color: rgba(255, 255, 255, 0.1) !important;
+        z-index: 99988 !important;
     }
 
     /* Add Transaction Button Custom Styling & Premium Hover Effects */
@@ -436,47 +425,6 @@
         }
     }
 </style>
-
-<!-- Top Header Date Converter (AD <-> BS) -->
-<div class="card shadow-sm mb-3 bg-white header-date-converter-card">
-    <div class="card-body py-2 px-3">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fs-5">📅</span>
-                <span class="fw-bold text-dark">{{ __('Current Session') }}</span>
-                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-0.5 small">{{ __('AD ⇄ BS Converter') }}</span>
-            </div>
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="d-flex align-items-center gap-1">
-                    <label for="header-date-ad" class="small fw-semibold text-muted mb-0 text-nowrap">{{ __('AD') }}:</label>
-                    <input type="date"
-                           id="header-date-ad"
-                           class="form-control form-control-sm font-monospace"
-                           value="{{ $todayAd ?? now()->format('Y-m-d') }}"
-                           style="width: 145px; border-radius: 8px;">
-                </div>
-                <span class="text-muted fw-bold small">⇄</span>
-                <div class="d-flex align-items-center gap-1">
-                    <label for="header-date-bs" class="small fw-semibold text-muted mb-0 text-nowrap">{{ __('BS') }}:</label>
-                    <input type="text"
-                           id="header-date-bs"
-                           class="form-control form-control-sm font-monospace header-nepali-datepicker"
-                           value="{{ $todayBs ?? '' }}"
-                           placeholder="YYYY-MM-DD"
-                           autocomplete="off"
-                           style="width: 130px; border-radius: 8px;">
-                </div>
-                <button type="button"
-                        id="header-date-today-btn"
-                        class="btn btn-sm btn-outline-secondary fw-semibold px-2"
-                        style="border-radius: 8px;"
-                        title="{{ __('Reset to Today') }}">
-                    {{ __('Today') }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="row mb-4 g-2">
     <!-- Action Buttons -->
@@ -3203,112 +3151,6 @@
                 $('body').addClass('modal-open');
             }
         });
-
-        // ── Top Header AD <-> BS Date Converter ──────────────────────
-        (function initHeaderDateConverter() {
-            const adInput = document.getElementById('header-date-ad');
-            const bsInput = document.getElementById('header-date-bs');
-            const todayBtn = document.getElementById('header-date-today-btn');
-            if (!adInput || !bsInput) return;
-
-            let isSyncingDates = false;
-
-            function formatConvertedDate(result) {
-                if (!result) return '';
-                if (typeof result === 'string') return result;
-                if (typeof result === 'object' && typeof NepaliFunctions !== 'undefined' && typeof NepaliFunctions.ConvertToDateFormat === 'function') {
-                    return NepaliFunctions.ConvertToDateFormat(result, 'YYYY-MM-DD');
-                }
-                return '';
-            }
-
-            function syncBsFromAd(adVal) {
-                if (isSyncingDates || !/^\d{4}-\d{2}-\d{2}$/.test(adVal)) return;
-                if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.AD2BS !== 'function') return;
-
-                isSyncingDates = true;
-                try {
-                    const bsStr = formatConvertedDate(NepaliFunctions.AD2BS(adVal));
-                    if (bsStr) {
-                        bsInput.value = bsStr;
-                    }
-                } catch (e) {
-                    console.error('AD to BS conversion failed:', e);
-                } finally {
-                    isSyncingDates = false;
-                }
-            }
-
-            function syncAdFromBs(bsVal) {
-                if (isSyncingDates || !/^\d{4}-\d{2}-\d{2}$/.test(bsVal)) return;
-                if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.BS2AD !== 'function') return;
-
-                isSyncingDates = true;
-                try {
-                    const adStr = formatConvertedDate(NepaliFunctions.BS2AD(bsVal));
-                    if (adStr) {
-                        adInput.value = adStr;
-                    }
-                } catch (e) {
-                    console.error('BS to AD conversion failed:', e);
-                } finally {
-                    isSyncingDates = false;
-                }
-            }
-
-            // Initialize Nepali Date Picker with onChange callback
-            const initialBs = bsInput.value || getTodayBS();
-            if (!bsInput.classList.contains('nepali-datepicker-initialized')) {
-                const pickerOpts = {
-                    language: 'english',
-                    value: initialBs,
-                    onChange: function(evt) {
-                        const selectedBs = (evt && evt.bs) ? evt.bs : bsInput.value;
-                        syncAdFromBs((selectedBs || '').trim());
-                    }
-                };
-                if (typeof $.fn.nepaliDatePicker === 'function') {
-                    $(bsInput).nepaliDatePicker(pickerOpts);
-                    bsInput.classList.add('nepali-datepicker-initialized');
-                } else if (typeof bsInput.NepaliDatePicker === 'function') {
-                    bsInput.NepaliDatePicker(pickerOpts);
-                    bsInput.classList.add('nepali-datepicker-initialized');
-                }
-                if (initialBs && !bsInput.value) {
-                    bsInput.value = initialBs;
-                }
-            }
-
-            // If BS was populated on load and AD was empty (or vice versa), ensure initial sync
-            if (adInput.value && !bsInput.value) {
-                syncBsFromAd(adInput.value);
-            } else if (bsInput.value && !adInput.value) {
-                syncAdFromBs(bsInput.value);
-            }
-
-            adInput.addEventListener('change', function() {
-                syncBsFromAd(this.value);
-            });
-            adInput.addEventListener('input', function() {
-                syncBsFromAd(this.value);
-            });
-
-            $(bsInput).on('change input dateSelect blur', function() {
-                syncAdFromBs((this.value || '').trim());
-            });
-
-            if (todayBtn) {
-                todayBtn.addEventListener('click', function() {
-                    const now = new Date();
-                    const yyyy = now.getFullYear();
-                    const mm = String(now.getMonth() + 1).padStart(2, '0');
-                    const dd = String(now.getDate()).padStart(2, '0');
-                    const todayAdStr = `${yyyy}-${mm}-${dd}`;
-                    adInput.value = todayAdStr;
-                    syncBsFromAd(todayAdStr);
-                });
-            }
-        })();
     });
 </script>
 

@@ -49,13 +49,6 @@ class CurrentSessionController extends Controller
         // Load extras ordered by display_order ascending
         $extras = \App\Models\Extra::orderBy('display_order', 'asc')->orderBy('id', 'asc')->get();
 
-        $todayAd = Carbon::today()->format('Y-m-d');
-        try {
-            $todayBs = LaravelNepaliDate::from($todayAd)->toNepaliDate();
-        } catch (\Throwable $e) {
-            $todayBs = '';
-        }
-
         return view('skatepark.current_session.index', compact(
             'tokens',
             'defaultTimes',
@@ -64,9 +57,7 @@ class CurrentSessionController extends Controller
             'defaultGameType',
             'playerPackages',
             'accounts',
-            'extras',
-            'todayAd',
-            'todayBs'
+            'extras'
         ));
     }
 

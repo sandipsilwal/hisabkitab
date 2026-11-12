@@ -185,10 +185,13 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertStringContainsString("route('player_packages.history'", $currentSessionSource);
         $this->assertStringContainsString("route('player_packages.deactivate'", $currentSessionSource);
         $this->assertStringContainsString('confirmDeactivatePlayerPackage', $currentSessionSource);
-        $this->assertStringContainsString('header-date-ad', $currentSessionSource);
-        $this->assertStringContainsString('header-date-bs', $currentSessionSource);
-        $this->assertStringContainsString('syncBsFromAd', $currentSessionSource);
-        $this->assertStringContainsString('syncAdFromBs', $currentSessionSource);
+        $this->assertStringNotContainsString('header-date-ad', $currentSessionSource);
         $this->assertStringContainsString("@include('skatepark.players._history_modal')", $currentSessionSource);
+
+        $layoutSource = file_get_contents(resource_path('views/layouts/app.blade.php'));
+        $this->assertStringContainsString('header-date-ad', $layoutSource);
+        $this->assertStringContainsString('header-date-bs', $layoutSource);
+        $this->assertStringContainsString('syncBsFromAd', $layoutSource);
+        $this->assertStringContainsString('syncAdFromBs', $layoutSource);
     }
 }
