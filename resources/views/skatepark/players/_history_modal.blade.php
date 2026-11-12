@@ -1,5 +1,10 @@
 <!-- Modal: View Package & Play History -->
-<div class="modal fade" id="viewHistoryModal" tabindex="-1" aria-labelledby="viewHistoryModalLabel" aria-hidden="true" style="z-index: 1075;">
+<style>
+    body.dark-mode #viewHistoryModal input[type="datetime-local"] {
+        color-scheme: dark;
+    }
+</style>
+<div class="modal fade" id="viewHistoryModal" tabindex="-1" data-bs-focus="false" aria-labelledby="viewHistoryModalLabel" aria-hidden="true" style="z-index: 1075;">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <div class="modal-header bg-dark text-white py-3">
@@ -138,11 +143,17 @@
                         <div class="row g-2 align-items-end">
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold mb-1" for="edit-start-time-${rec.id}">${escapeHtml(HISTORY_LABELS.startDateTime)}</label>
-                                <input type="datetime-local" class="form-control form-control-sm" id="edit-start-time-${rec.id}" value="${escapeHtml(rec.start_time_input || '')}" required>
+                                <div class="input-group input-group-sm">
+                                    <input type="datetime-local" class="form-control form-control-sm" id="edit-start-time-${rec.id}" value="${escapeHtml(rec.start_time_input || '')}" required>
+                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.startDateTime)}" onclick="openDateTimePicker('edit-start-time-${rec.id}')">📅</button>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold mb-1" for="edit-end-time-${rec.id}">${escapeHtml(HISTORY_LABELS.endDateTime)}</label>
-                                <input type="datetime-local" class="form-control form-control-sm" id="edit-end-time-${rec.id}" value="${escapeHtml(rec.end_time_input || '')}">
+                                <div class="input-group input-group-sm">
+                                    <input type="datetime-local" class="form-control form-control-sm" id="edit-end-time-${rec.id}" value="${escapeHtml(rec.end_time_input || '')}">
+                                    <button type="button" class="btn btn-outline-secondary" title="${escapeHtml(HISTORY_LABELS.endDateTime)}" onclick="openDateTimePicker('edit-end-time-${rec.id}')">📅</button>
+                                </div>
                             </div>
                             <div class="col-md-4 d-flex gap-2">
                                 <button type="button" class="btn btn-sm btn-primary fw-semibold px-3" id="save-record-btn-${rec.id}" onclick="savePlayRecordTimes(${rec.id})">
@@ -288,6 +299,19 @@
         }
     }
 
+    window.openDateTimePicker = function (inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.focus();
+        if (typeof input.showPicker === 'function') {
+            try {
+                input.showPicker();
+            } catch (e) {
+                // Fallback: focusing already lets user edit/pick natively
+            }
+        }
+    };
+
     window.toggleEditPlayRecordTimes = function (recordId, forceState) {
         const editRow = document.getElementById(`edit-record-row-${recordId}`);
         const errorEl = document.getElementById(`edit-record-error-${recordId}`);
@@ -404,13 +428,36 @@
 
     const historyModalEl = document.getElementById('viewHistoryModal');
     if (historyModalEl) {
+        let suspendedFocusTraps = [];
+
+        historyModalEl.addEventListener('show.bs.modal', function () {
+            suspendedFocusTraps = [];
+            document.querySelectorAll('.modal.show').forEach(function (openModal) {
+                if (openModal !== historyModalEl) {
+                    const instance = bootstrap.Modal.getInstance(openModal);
+                    if (instance && instance._focustrap) {
+                        instance._focustrap.deactivate();
+                        suspendedFocusTraps.push(instance._focustrap);
+                    }
+                }
+            });
+        });
+
         historyModalEl.addEventListener('shown.bs.modal', function () {
             const backdrops = document.querySelectorAll('.modal-backdrop');
             if (backdrops.length > 1) {
                 backdrops[backdrops.length - 1].style.zIndex = '1070';
             }
         });
+
         historyModalEl.addEventListener('hidden.bs.modal', function () {
+            suspendedFocusTraps.forEach(function (trap) {
+                try {
+                    trap.activate();
+                } catch (e) {}
+            });
+            suspendedFocusTraps = [];
+
             if (document.querySelector('.modal.show')) {
                 document.body.classList.add('modal-open');
             }
