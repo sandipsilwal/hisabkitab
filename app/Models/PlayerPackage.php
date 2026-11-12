@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Anuzpandey\LaravelNepaliDate\LaravelNepaliDate;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class PlayerPackage extends Model
@@ -40,6 +42,22 @@ class PlayerPackage extends Model
     }
 
     /**
+     * Format a date into Nepali (BS) date string safely.
+     */
+    public static function formatNepaliDate(?Carbon $date): string
+    {
+        if (!$date) {
+            return '—';
+        }
+
+        try {
+            return LaravelNepaliDate::from($date->format('Y-m-d'))->toNepaliDate();
+        } catch (\Throwable $e) {
+            return '—';
+        }
+    }
+
+    /**
      * Build package summary metrics and play record history for modal display.
      */
     public function toHistoryArray(): array
@@ -74,6 +92,7 @@ class PlayerPackage extends Model
             'total_amount' => $this->total_amount,
             'package_status' => $this->package_status,
             'purchased_date' => $this->created_at?->format('Y-m-d') ?? '—',
+            'purchased_date_bs' => self::formatNepaliDate($this->created_at),
             'remarks' => $this->remarks,
             'allowed_minutes' => $allowedMinutes,
             'allowed_hours_formatted' => self::formatHoursMinutes($allowedMinutes),
@@ -88,9 +107,12 @@ class PlayerPackage extends Model
                 $actualMinutes = $rec->resolvedActualMinutes();
                 $status = $rec->end_time ? 'completed' : ($rec->start_time ? 'playing' : 'pending');
 
+                $recordDate = $rec->start_time ?? $rec->created_at;
+
                 return [
                     'id' => $rec->id,
-                    'date' => ($rec->start_time ?? $rec->created_at)?->format('Y-m-d') ?? '—',
+                    'date' => $recordDate?->format('Y-m-d') ?? '—',
+                    'date_bs' => self::formatNepaliDate($recordDate),
                     'token' => $rec->token?->name ?? '—',
                     'game_type' => $rec->gameType?->game_name ?? $package?->gameType?->game_name ?? '—',
                     'start_time' => $rec->start_time?->format('h:i A') ?? '—',

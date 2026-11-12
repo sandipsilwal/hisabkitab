@@ -40,7 +40,9 @@
         min: @json(__('min')),
         minPerDay: @json(__('min/day')),
         playRecords: @json(__('Play Records')),
+        sn: @json(__('S.N.')),
         date: @json(__('Date')),
+        bs: @json(__('BS')),
         token: @json(__('Token')),
         game: @json(__('Game')),
         startTime: @json(__('Start Time')),
@@ -109,8 +111,11 @@
         const recordsRows = pkg.play_records.length > 0
             ? pkg.play_records.map((rec, i) => `
                 <tr>
-                    <td class="text-muted font-monospace small">${i + 1}</td>
-                    <td class="font-monospace small">${escapeHtml(rec.date)}</td>
+                    <td class="text-muted font-monospace small">${pkg.play_records.length - i}</td>
+                    <td class="font-monospace small">
+                        <div class="fw-semibold">${escapeHtml(rec.date_bs || '—')} <span class="text-muted fw-normal" style="font-size: 0.7rem;">(${escapeHtml(HISTORY_LABELS.bs)})</span></div>
+                        <div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(rec.date)}</div>
+                    </td>
                     <td class="fw-semibold">${escapeHtml(rec.token)}</td>
                     <td>${escapeHtml(rec.game_type)}</td>
                     <td class="font-monospace small">${escapeHtml(rec.start_time)}</td>
@@ -174,7 +179,7 @@
                             </span>
                         </div>
                         <div class="small text-muted">
-                            ${escapeHtml(HISTORY_LABELS.purchased)}: <span class="font-monospace">${escapeHtml(pkg.purchased_date)}</span>
+                            ${escapeHtml(HISTORY_LABELS.purchased)}: <span class="font-monospace">${escapeHtml(pkg.purchased_date_bs || '—')} (${escapeHtml(HISTORY_LABELS.bs)}) / ${escapeHtml(pkg.purchased_date)}</span>
                             • Rs. ${Number(pkg.total_amount || 0).toLocaleString()}
                         </div>
                         ${remarksHtml}
@@ -220,7 +225,7 @@
                         <table class="table table-sm table-hover mb-0 align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>#</th>
+                                    <th>${escapeHtml(HISTORY_LABELS.sn)}</th>
                                     <th>${escapeHtml(HISTORY_LABELS.date)}</th>
                                     <th>${escapeHtml(HISTORY_LABELS.token)}</th>
                                     <th>${escapeHtml(HISTORY_LABELS.game)}</th>
