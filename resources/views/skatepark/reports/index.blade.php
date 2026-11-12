@@ -605,8 +605,11 @@
                                 {{ $rec->end_time ? $rec->end_time->format('h:i A') : '—' }}
                             </td>
                             <td class="fw-semibold text-center">
-                                @if($rec->actual_time)
-                                    {{ $rec->actual_time >= 60 ? intdiv($rec->actual_time, 60).'h '.($rec->actual_time % 60).'m' : $rec->actual_time.'m' }}
+                                @php
+                                    $actualMinutes = $rec->resolvedActualMinutes();
+                                @endphp
+                                @if($actualMinutes)
+                                    {{ $actualMinutes >= 60 ? intdiv($actualMinutes, 60).'h '.($actualMinutes % 60).'m' : $actualMinutes.'m' }}
                                 @else
                                     —
                                 @endif

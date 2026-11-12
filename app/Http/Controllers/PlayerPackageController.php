@@ -34,7 +34,7 @@ class PlayerPackageController extends Controller
         $request->validate([
             'package_id' => 'required|exists:packages,id',
             'total_amount' => 'required|integer|min:0',
-            'package_status' => 'required|in:not played,started,completed',
+            'package_status' => 'required|in:not played,started,completed,inactive',
             'remarks' => 'nullable|string',
         ]);
 
@@ -59,5 +59,41 @@ class PlayerPackageController extends Controller
         $playerPackage->delete();
 
         return redirect()->route('players.show', $playerId)->with('success', 'Player package removed successfully.');
+    }
+
+    /**
+     * Return JSON history of a specific purchased player package and its play records.
+     */
+    public function history(PlayerPackage $playerPackage)
+    {
+        $playerPackage->load([
+            'player',
+            'package.gameType',
+            'playRecords.token',
+            'playRecords.gameType',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'player' => [
+                'id' => $playerPackage->player->id,
+                'name' => $playerPackage->player->name,
+                'contact' => $playerPackage->player->contact,
+            ],
+            'packages' => [$playerPackage->toHistoryArray()],
+        ]);
+    }
+
+    /**
+     * Mark a player package as inactive so it no longer appears in the active package play list.
+     */
+    public function deactivate(PlayerPackage $playerPackage)
+    {
+        $playerPackage->update(['package_status' => 'inactive']);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Player package marked as inactive.'),
+        ]);
     }
 }

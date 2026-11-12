@@ -18,7 +18,7 @@
                         <th class="text-start py-3">{{ __('Contact') }}</th>
                         <th class="text-start py-3">{{ __('Address') }}</th>
                         <th class="text-center py-3" style="width: 180px;">{{ __('Active Packages') }}</th>
-                        <th class="pe-4 text-end py-3" style="width: 250px;">{{ __('Actions') }}</th>
+                        <th class="pe-4 text-end py-3" style="min-width: 340px;">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -34,19 +34,24 @@
                                 </span>
                             </td>
                             <td class="pe-4 text-end">
-                                <a href="{{ route('players.show', $player->id) }}" class="btn btn-primary btn-sm me-1" style="border-radius: 6px; font-weight: 500;">
-                                    {{ __('Profile & Packages') }}
-                                </a>
-                                <button type="button" class="btn btn-outline-warning btn-sm me-1" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ $player->id }}">
-                                    {{ __('Edit') }}
-                                </button>
-                                <form action="{{ route('players.destroy', $player->id) }}" method="POST" class="d-inline" onsubmit="confirmDeletePlayer(event, this, {{ $player->playerPackages()->exists() ? 'true' : 'false' }})">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;">
-                                        {{ __('Delete') }}
+                                <div class="d-inline-flex align-items-center justify-content-end gap-1 flex-nowrap">
+                                    <a href="{{ route('players.show', $player->id) }}" class="btn btn-primary btn-sm text-nowrap" style="border-radius: 6px; font-weight: 500;">
+                                        {{ __('Profile & Packages') }}
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info btn-sm text-nowrap" style="border-radius: 6px; font-weight: 500;" onclick="openHistoryModal('{{ route('players.history', $player->id) }}', @js($player->name))">
+                                        {{ __('View History') }}
                                     </button>
-                                </form>
+                                    <button type="button" class="btn btn-outline-warning btn-sm text-nowrap" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#editPlayerModal{{ $player->id }}">
+                                        {{ __('Edit') }}
+                                    </button>
+                                    <form action="{{ route('players.destroy', $player->id) }}" method="POST" class="d-inline" onsubmit="confirmDeletePlayer(event, this, {{ $player->playerPackages()->exists() ? 'true' : 'false' }})">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap" style="border-radius: 6px;">
+                                            {{ __('Delete') }}
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -220,4 +225,6 @@ function submitDeleteForm() {
     }
 }
 </script>
+
+@include('skatepark.players._history_modal')
 @endsection

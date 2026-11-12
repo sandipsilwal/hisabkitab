@@ -56,7 +56,7 @@
                         <th class="text-end py-3">Paid (Rs.)</th>
                         <th class="text-end py-3">Remaining (Rs.)</th>
                         <th class="text-center py-3">Status</th>
-                        <th class="pe-4 text-end py-3" style="width: 260px;">Actions</th>
+                        <th class="pe-4 text-end py-3" style="min-width: 340px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,13 +90,22 @@
                                     <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 fw-semibold" style="border-radius: 20px;">
                                         Completed
                                     </span>
+                                @elseif($playerPkg->package_status === 'inactive')
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 fw-semibold" style="border-radius: 20px;">
+                                        Inactive
+                                    </span>
                                 @endif
                             </td>
                             <td class="pe-4 text-end">
-                                <div class="d-flex align-items-center justify-content-end gap-1">
+                                <div class="d-flex align-items-center justify-content-end gap-1 flex-nowrap">
                                     <!-- Record Payment Button -->
-                                    <button type="button" class="btn btn-outline-primary btn-sm fw-semibold px-2" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#recordPaymentModal{{ $playerPkg->id }}" title="Record Payment">
+                                    <button type="button" class="btn btn-outline-primary btn-sm fw-semibold px-2 text-nowrap" style="border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#recordPaymentModal{{ $playerPkg->id }}" title="Record Payment">
                                         💳 Record Payment
+                                    </button>
+
+                                    <!-- View History Button -->
+                                    <button type="button" class="btn btn-outline-success btn-sm fw-semibold px-2 text-nowrap" style="border-radius: 6px;" onclick="openHistoryModal('{{ route('player_packages.history', $playerPkg->id) }}', @js($player->name . ' — ' . $playerPkg->package->gameType->game_name))" title="{{ __('View History') }}">
+                                        📜 {{ __('View History') }}
                                     </button>
                                     
                                     <!-- Eye Button (View Details) -->
@@ -379,6 +388,7 @@
                                 <option value="not played" {{ $playerPkg->package_status === 'not played' ? 'selected' : '' }}>Not Played</option>
                                 <option value="started" {{ $playerPkg->package_status === 'started' ? 'selected' : '' }}>Started</option>
                                 <option value="completed" {{ $playerPkg->package_status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                <option value="inactive" {{ $playerPkg->package_status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
 
@@ -488,4 +498,6 @@ function submitDeleteForm() {
     }
 }
 </script>
+
+@include('skatepark.players._history_modal')
 @endsection

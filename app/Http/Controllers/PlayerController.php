@@ -41,6 +41,29 @@ class PlayerController extends Controller
         return view('skatepark.players.show', compact('player', 'packages'));
     }
 
+    /**
+     * Return JSON history of all packages and play records for a player.
+     */
+    public function history(Player $player)
+    {
+        $player->load([
+            'playerPackages' => fn ($query) => $query->orderByDesc('id'),
+            'playerPackages.package.gameType',
+            'playerPackages.playRecords.token',
+            'playerPackages.playRecords.gameType',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'player' => [
+                'id' => $player->id,
+                'name' => $player->name,
+                'contact' => $player->contact,
+            ],
+            'packages' => $player->playerPackages->map(fn ($pkg) => $pkg->toHistoryArray())->values(),
+        ]);
+    }
+
     public function edit(Player $player)
     {
         return view('skatepark.players.edit', compact('player'));

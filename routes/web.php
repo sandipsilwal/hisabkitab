@@ -57,7 +57,10 @@ Route::middleware('auth')->group(function () {
         
         // Players & Packages CRUD
         Route::resource('players', PlayerController::class);
+        Route::get('players/{player}/history', [PlayerController::class, 'history'])->name('players.history');
         Route::resource('player_packages', PlayerPackageController::class);
+        Route::get('player_packages/{playerPackage}/history', [PlayerPackageController::class, 'history'])->name('player_packages.history');
+        Route::post('player_packages/{playerPackage}/deactivate', [PlayerPackageController::class, 'deactivate'])->name('player_packages.deactivate');
         Route::resource('player_packages.payments', PlayerPackagePaymentHistoryController::class);
 
         Route::resource('extras', ExtraController::class);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class PlayRecord extends Model
@@ -49,5 +50,27 @@ class PlayRecord extends Model
     public function playRecordExtras()
     {
         return $this->hasMany(PlayRecordExtra::class);
+    }
+
+    /**
+     * Calculate duration in minutes between start and end times (minimum 1 minute).
+     */
+    public static function calculateDurationMinutes(Carbon $startTime, Carbon $endTime): int
+    {
+        $diffInSeconds = max(0, $startTime->diffInSeconds($endTime, false));
+
+        return max(1, (int) round($diffInSeconds / 60));
+    }
+
+    /**
+     * Resolve actual minutes played from timestamps when available, falling back to stored actual_time.
+     */
+    public function resolvedActualMinutes(): ?int
+    {
+        if ($this->start_time && $this->end_time) {
+            return self::calculateDurationMinutes($this->start_time, $this->end_time);
+        }
+
+        return $this->actual_time !== null ? (int) $this->actual_time : null;
     }
 }

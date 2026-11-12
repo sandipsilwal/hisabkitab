@@ -67,6 +67,25 @@
     .btn-step:hover {
         transform: scale(1.03);
     }
+    .pkg-player-card {
+        border: 1.5px solid #198754;
+        border-radius: 12px;
+        background-color: rgba(25, 135, 84, 0.03);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .pkg-player-card:hover {
+        background-color: rgba(25, 135, 84, 0.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+    }
+    body.dark-mode .pkg-player-card {
+        background-color: rgba(25, 135, 84, 0.08);
+        border-color: #22c55e;
+    }
+    body.dark-mode .pkg-player-card:hover {
+        background-color: rgba(25, 135, 84, 0.18);
+    }
     
     @keyframes pulse-yellow-tint {
         0% { background-color: rgba(234, 179, 8, 0.02); }
@@ -654,24 +673,55 @@
                 <!-- STEP 1: ACTIVE PLAYER SELECTION -->
                 <div id="pkg-step-1">
                     <h5 class="fw-bold mb-3 text-dark">{{ __('Select Player Package') }}</h5>
-                    <div class="row g-3" style="max-height: 350px; overflow-y: auto;">
+                    <div class="row g-3" id="pkg-list-container" style="max-height: 350px; overflow-y: auto;">
                         @forelse($playerPackages as $pp)
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-success btn-step w-100 py-3 text-start d-flex justify-content-between align-items-center" onclick="selectPlayerPackage({{ $pp->id }}, '{{ $pp->player->name }}', {{ $pp->package->game_type_id }}, '{{ $pp->package->gameType->game_name }}')">
-                                    <div>
-                                        <strong>👤 {{ $pp->player->name }}</strong>
-                                        <span class="d-block small text-muted">{{ $pp->package->gameType->game_name }}</span>
+                            <div class="col-md-6 pkg-player-card-col" id="pkg-card-{{ $pp->id }}">
+                                <div class="pkg-player-card w-100 p-3 text-start d-flex justify-content-between align-items-center gap-2 h-100"
+                                     role="button"
+                                     tabindex="0"
+                                     onclick="selectPlayerPackage({{ $pp->id }}, @js($pp->player->name), {{ $pp->package->game_type_id }}, @js($pp->package->gameType->game_name))">
+                                    <div class="flex-grow-1 min-w-0">
+                                        <strong class="d-block text-success text-truncate">👤 {{ $pp->player->name }}</strong>
+                                        <span class="d-block small text-muted text-truncate">{{ $pp->package->gameType->game_name }}</span>
                                         <span class="d-block small text-muted font-monospace" style="font-size: 0.75rem;">{{ __('Time per day') }}: {{ $pp->package->time_per_day }} {{ __('min') }} ({{ $pp->package->no_of_days }} {{ __('days') }})</span>
                                     </div>
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">{{ __('Active') }}</span>
-                                </button>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0" onclick="event.stopPropagation();">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-info d-inline-flex align-items-center justify-content-center p-1.5"
+                                                style="border-radius: 8px;"
+                                                title="{{ __('View History') }}"
+                                                aria-label="{{ __('View History') }}"
+                                                onclick="openHistoryModal('{{ route('player_packages.history', $pp->id) }}', @js($pp->player->name . ' — ' . $pp->package->gameType->game_name))">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                                <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.5m-.929 2.138a7 7 0 0 0 .3-.492l.895.447a8 8 0 0 1-.714 1.163l-.803-.594q.176-.239.322-.524M12.646 13.354a7 7 0 0 0 .458-.458l.707.707a8 8 0 0 1-.522.522l-.643-.771z"/>
+                                                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                                            </svg>
+                                        </button>
+                                        <div class="form-check form-switch m-0 d-flex align-items-center" title="{{ __('Make Inactive') }}">
+                                            <input class="form-check-input pkg-active-toggle"
+                                                   type="checkbox"
+                                                   role="switch"
+                                                   checked
+                                                   style="cursor: pointer; width: 2.2em; height: 1.15em;"
+                                                   aria-label="{{ __('Active') }}"
+                                                   onchange="confirmDeactivatePlayerPackage(this, {{ $pp->id }}, '{{ route('player_packages.deactivate', $pp->id) }}', @js($pp->player->name), @js($pp->package->gameType->game_name))">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         @empty
-                            <div class="text-center py-5 text-muted col-12">
+                            <div class="text-center py-5 text-muted col-12" id="pkg-list-empty">
                                 <i class="fs-1 d-block mb-2">👤</i>
                                 {!! __('No active (uncompleted) player packages found.<br>Create a player package under Players & Packages profile view first.') !!}
                             </div>
                         @endforelse
+                        @if($playerPackages->isNotEmpty())
+                            <div class="text-center py-5 text-muted col-12 d-none" id="pkg-list-empty">
+                                <i class="fs-1 d-block mb-2">👤</i>
+                                {!! __('No active (uncompleted) player packages found.<br>Create a player package under Players & Packages profile view first.') !!}
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -2559,6 +2609,56 @@
     // ==============================================
     // MULTI-STEP MODAL: PACKAGE PLAY ENGINE
     // ==============================================
+    function confirmDeactivatePlayerPackage(checkbox, playerPackageId, deactivateUrl, playerName, gameName) {
+        if (checkbox.checked) {
+            return;
+        }
+
+        // Keep switch checked until user confirms
+        checkbox.checked = true;
+
+        const isDarkMode = document.body.classList.contains('dark-mode') || localStorage.getItem('theme') === 'dark';
+
+        Swal.fire({
+            title: "{{ __('Make Package Inactive?') }}",
+            text: `${playerName} (${gameName}) — {{ __('This package will be marked inactive and removed from the active list.') }}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: "{{ __('Yes, Make Inactive') }}",
+            cancelButtonText: "{{ __('Cancel') }}",
+            background: isDarkMode ? '#1e293b' : '#ffffff',
+            color: isDarkMode ? '#f8fafc' : '#0f172a',
+        }).then(function(result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            $.ajax({
+                url: deactivateUrl,
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}"
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.success) {
+                        $(`#pkg-card-${playerPackageId}`).remove();
+                        if ($('#pkg-list-container .pkg-player-card-col').length === 0) {
+                            $('#pkg-list-empty').removeClass('d-none');
+                        }
+                    } else {
+                        alert(res.message || "{{ __('Failed to mark package inactive.') }}");
+                    }
+                },
+                error: function(err) {
+                    alert(err.responseJSON && err.responseJSON.message ? err.responseJSON.message : "{{ __('Failed to mark package inactive.') }}");
+                }
+            });
+        });
+    }
+
     function selectPlayerPackage(id, playerName, gameTypeId, gameName) {
         pkgData.player_package_id = id;
         pkgData.player_name = playerName;
@@ -3053,4 +3153,6 @@
         });
     });
 </script>
+
+@include('skatepark.players._history_modal')
 @endsection

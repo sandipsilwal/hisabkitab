@@ -38,8 +38,8 @@ class CurrentSessionController extends Controller
         // Find default game type
         $defaultGameType = GameType::where('is_default', true)->first();
 
-        // Load active player packages (uncompleted)
-        $playerPackages = PlayerPackage::where('package_status', '!=', 'completed')
+        // Load active player packages (not completed or inactive)
+        $playerPackages = PlayerPackage::whereNotIn('package_status', ['completed', 'inactive'])
             ->with(['player', 'package.gameType'])
             ->get();
 
@@ -314,9 +314,8 @@ class CurrentSessionController extends Controller
         $endTime = Carbon::now();
         $startTime = $playRecord->start_time;
 
-        // Calculate actual time in minutes (round up to nearest minute, minimum 1 minute if start != end)
-        $diffInSeconds = $endTime->diffInSeconds($startTime);
-        $actualTimeMinutes = max(1, (int) round($diffInSeconds / 60));
+        // Calculate actual time in minutes (round to nearest minute, minimum 1 minute)
+        $actualTimeMinutes = PlayRecord::calculateDurationMinutes($startTime, $endTime);
 
         $amount = $playRecord->amount;
         if ($request->has('amount')) {
@@ -356,7 +355,8 @@ class CurrentSessionController extends Controller
                     // Calculate total actual time of all stopped records for this package subscription
                     $totalPlayedMinutes = PlayRecord::where('player_package_id', $playerPackage->id)
                         ->whereNotNull('end_time')
-                        ->sum('actual_time');
+                        ->get()
+                        ->sum(fn ($rec) => $rec->resolvedActualMinutes() ?? 0);
 
                     $allowedMinutes = $playerPackage->package->time_per_day * $playerPackage->package->no_of_days;
 
@@ -517,7 +517,7 @@ class CurrentSessionController extends Controller
         // Summary aggregates
         $totalSessions       = $records->count();
         $totalPlayers        = $records->sum('no_of_players');
-        $totalMinutes        = $records->sum('actual_time');
+        $totalMinutes        = $records->sum(fn ($rec) => $rec->resolvedActualMinutes() ?? 0);
         $normalCount         = $records->where('player_type', 'normal')->count();
         $packageCount        = $records->where('player_type', 'package')->count();
         $playRecordsEarnings = $records->where('player_type', 'normal')->sum('amount');
