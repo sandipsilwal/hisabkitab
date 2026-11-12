@@ -89,6 +89,8 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertSame(3, $history['total_sessions']);
         $this->assertCount(3, $history['play_records']);
         $this->assertSame('2026-11-02', $history['play_records'][0]['date']);
+        $this->assertSame('2026-11-02T10:00', $history['play_records'][0]['start_time_input']);
+        $this->assertSame('2026-11-02T11:00', $history['play_records'][0]['end_time_input']);
         $this->assertSame('1h 0m', $history['play_records'][0]['actual_time_formatted']);
         $this->assertSame('completed', $history['play_records'][0]['status']);
     }
@@ -158,6 +160,9 @@ class PlayerPackageHistoryTest extends TestCase
         $this->assertStringContainsString('Total Days Played', $modalHtml);
         $this->assertStringContainsString('Remaining Days', $modalHtml);
         $this->assertStringContainsString('Remaining Hours', $modalHtml);
+        $this->assertStringContainsString('datetime-local', $modalHtml);
+        $this->assertStringContainsString('savePlayRecordTimes', $modalHtml);
+        $this->assertStringContainsString('toggleEditPlayRecordTimes', $modalHtml);
 
         $indexSource = file_get_contents(resource_path('views/skatepark/players/index.blade.php'));
         $this->assertStringContainsString("route('players.history'", $indexSource);

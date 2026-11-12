@@ -56,7 +56,21 @@
         pkgCompleted: @json(__('Completed')),
         pkgInactive: @json(__('Inactive')),
         remarks: @json(__('Remarks')),
+        actions: @json(__('Actions')),
+        editTime: @json(__('Edit Time')),
+        startDateTime: @json(__('Start Date & Time')),
+        endDateTime: @json(__('End Date & Time')),
+        save: @json(__('Save')),
+        saving: @json(__('Saving...')),
+        cancel: @json(__('Cancel')),
+        startRequired: @json(__('Start date and time is required.')),
+        endAfterStart: @json(__('End date and time must be after or equal to start date and time.')),
+        updateFailed: @json(__('Failed to update play record time.')),
     };
+    const UPDATE_TIMES_URL_TEMPLATE = @json(route('player_packages.play_records.update-times', ['playRecord' => '__RECORD_ID__']));
+    const CSRF_TOKEN = @json(csrf_token());
+    let currentHistoryUrl = '';
+    let currentHistorySubtitle = '';
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -104,11 +118,43 @@
                     <td class="fw-bold text-primary">${escapeHtml(rec.actual_time_formatted)}</td>
                     <td class="text-center">${escapeHtml(rec.no_of_players)}</td>
                     <td class="text-center">${renderRecordStatusBadge(rec.status)}</td>
+                    <td class="text-end">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-warning px-2 py-0.5"
+                                style="border-radius: 6px;"
+                                title="${escapeHtml(HISTORY_LABELS.editTime)}"
+                                onclick="toggleEditPlayRecordTimes(${rec.id})">
+                            ✏️
+                        </button>
+                    </td>
+                </tr>
+                <tr id="edit-record-row-${rec.id}" class="d-none bg-light">
+                    <td colspan="10" class="p-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold mb-1" for="edit-start-time-${rec.id}">${escapeHtml(HISTORY_LABELS.startDateTime)}</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="edit-start-time-${rec.id}" value="${escapeHtml(rec.start_time_input || '')}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold mb-1" for="edit-end-time-${rec.id}">${escapeHtml(HISTORY_LABELS.endDateTime)}</label>
+                                <input type="datetime-local" class="form-control form-control-sm" id="edit-end-time-${rec.id}" value="${escapeHtml(rec.end_time_input || '')}">
+                            </div>
+                            <div class="col-md-4 d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary fw-semibold px-3" id="save-record-btn-${rec.id}" onclick="savePlayRecordTimes(${rec.id})">
+                                    ${escapeHtml(HISTORY_LABELS.save)}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary px-3" onclick="toggleEditPlayRecordTimes(${rec.id}, false)">
+                                    ${escapeHtml(HISTORY_LABELS.cancel)}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-2 d-none" id="edit-record-error-${rec.id}"></div>
+                    </td>
                 </tr>
             `).join('')
             : `
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4 small">${escapeHtml(HISTORY_LABELS.noRecords)}</td>
+                    <td colspan="10" class="text-center text-muted py-4 small">${escapeHtml(HISTORY_LABELS.noRecords)}</td>
                 </tr>
             `;
 
@@ -183,6 +229,7 @@
                                     <th>${escapeHtml(HISTORY_LABELS.duration)}</th>
                                     <th class="text-center">${escapeHtml(HISTORY_LABELS.players)}</th>
                                     <th class="text-center">${escapeHtml(HISTORY_LABELS.status)}</th>
+                                    <th class="text-end">${escapeHtml(HISTORY_LABELS.actions)}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -195,21 +242,8 @@
         `;
     }
 
-    window.openHistoryModal = async function (url, subtitle) {
-        const modalEl = document.getElementById('viewHistoryModal');
-        const subtitleEl = document.getElementById('viewHistoryModalSubtitle');
+    async function loadHistoryData(url) {
         const bodyEl = document.getElementById('viewHistoryModalBody');
-
-        subtitleEl.textContent = subtitle || '';
-        bodyEl.innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <div class="spinner-border text-primary mb-2" role="status"></div>
-                <div>${escapeHtml(HISTORY_LABELS.loading)}</div>
-            </div>
-        `;
-
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
 
         try {
             const response = await fetch(url, {
@@ -247,6 +281,120 @@
                 <div class="alert alert-danger mb-0">${escapeHtml(HISTORY_LABELS.failed)}</div>
             `;
         }
+    }
+
+    window.toggleEditPlayRecordTimes = function (recordId, forceState) {
+        const editRow = document.getElementById(`edit-record-row-${recordId}`);
+        const errorEl = document.getElementById(`edit-record-error-${recordId}`);
+        if (!editRow) return;
+
+        const shouldShow = typeof forceState === 'boolean'
+            ? forceState
+            : editRow.classList.contains('d-none');
+
+        editRow.classList.toggle('d-none', !shouldShow);
+        if (errorEl) {
+            errorEl.textContent = '';
+            errorEl.classList.add('d-none');
+        }
+    };
+
+    window.savePlayRecordTimes = async function (recordId) {
+        const startInput = document.getElementById(`edit-start-time-${recordId}`);
+        const endInput = document.getElementById(`edit-end-time-${recordId}`);
+        const errorEl = document.getElementById(`edit-record-error-${recordId}`);
+        const saveBtn = document.getElementById(`save-record-btn-${recordId}`);
+
+        const showError = (msg) => {
+            if (errorEl) {
+                errorEl.textContent = msg;
+                errorEl.classList.remove('d-none');
+            }
+        };
+
+        const startVal = startInput ? startInput.value.trim() : '';
+        const endVal = endInput ? endInput.value.trim() : '';
+
+        if (!startVal) {
+            showError(HISTORY_LABELS.startRequired);
+            return;
+        }
+        if (endVal && new Date(endVal) < new Date(startVal)) {
+            showError(HISTORY_LABELS.endAfterStart);
+            return;
+        }
+
+        if (errorEl) {
+            errorEl.textContent = '';
+            errorEl.classList.add('d-none');
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = HISTORY_LABELS.saving;
+        }
+
+        try {
+            const url = UPDATE_TIMES_URL_TEMPLATE.replace('__RECORD_ID__', String(recordId));
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    start_time: startVal,
+                    end_time: endVal || null
+                })
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success) {
+                const validationMsg = data.errors
+                    ? Object.values(data.errors).flat()[0]
+                    : null;
+                showError(validationMsg || data.message || HISTORY_LABELS.updateFailed);
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = HISTORY_LABELS.save;
+                }
+                return;
+            }
+
+            if (currentHistoryUrl) {
+                await loadHistoryData(currentHistoryUrl);
+            }
+        } catch (err) {
+            showError(HISTORY_LABELS.updateFailed);
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = HISTORY_LABELS.save;
+            }
+        }
+    };
+
+    window.openHistoryModal = async function (url, subtitle) {
+        const modalEl = document.getElementById('viewHistoryModal');
+        const subtitleEl = document.getElementById('viewHistoryModalSubtitle');
+        const bodyEl = document.getElementById('viewHistoryModalBody');
+
+        currentHistoryUrl = url;
+        currentHistorySubtitle = subtitle || '';
+
+        subtitleEl.textContent = currentHistorySubtitle;
+        bodyEl.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <div>${escapeHtml(HISTORY_LABELS.loading)}</div>
+            </div>
+        `;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        await loadHistoryData(url);
     };
 
     const historyModalEl = document.getElementById('viewHistoryModal');

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\PlayerPackage;
 use App\Models\Package;
 use App\Models\Player;
+use App\Models\PlayRecord;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PlayerPackageController extends Controller
@@ -94,6 +96,60 @@ class PlayerPackageController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('Player package marked as inactive.'),
+        ]);
+    }
+
+    /**
+     * Update start and end date-time for a package play record and recalculate duration/package status.
+     */
+    public function updatePlayRecordTimes(Request $request, PlayRecord $playRecord)
+    {
+        if ($playRecord->player_type !== 'package' || !$playRecord->player_package_id) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Only package play records can be updated here.'),
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'start_time' => 'required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+        ]);
+
+        $startTime = Carbon::parse($validated['start_time']);
+        $endTime = !empty($validated['end_time']) ? Carbon::parse($validated['end_time']) : null;
+        $actualMinutes = $endTime ? PlayRecord::calculateDurationMinutes($startTime, $endTime) : null;
+
+        $playRecord->update([
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'actual_time' => $actualMinutes,
+        ]);
+
+        $playerPackage = $playRecord->playerPackage()->with(['package', 'playRecords'])->first();
+        if ($playerPackage && $playerPackage->package_status !== 'inactive') {
+            $totalPlayedMinutes = $playerPackage->playRecords
+                ->whereNotNull('end_time')
+                ->sum(fn ($rec) => $rec->resolvedActualMinutes() ?? 0);
+            $allowedMinutes = ($playerPackage->package?->time_per_day ?? 0) * ($playerPackage->package?->no_of_days ?? 0);
+            $hasStarted = $playerPackage->playRecords->contains(fn ($rec) => $rec->start_time !== null);
+
+            if ($allowedMinutes > 0 && $totalPlayedMinutes >= $allowedMinutes) {
+                $newStatus = 'completed';
+            } elseif ($hasStarted) {
+                $newStatus = 'started';
+            } else {
+                $newStatus = 'not played';
+            }
+
+            if ($playerPackage->package_status !== $newStatus) {
+                $playerPackage->update(['package_status' => $newStatus]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Play record time updated successfully.'),
         ]);
     }
 }

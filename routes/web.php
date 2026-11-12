@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('player_packages', PlayerPackageController::class);
         Route::get('player_packages/{playerPackage}/history', [PlayerPackageController::class, 'history'])->name('player_packages.history');
         Route::post('player_packages/{playerPackage}/deactivate', [PlayerPackageController::class, 'deactivate'])->name('player_packages.deactivate');
+        Route::post('player_packages/play_records/{playRecord}/times', [PlayerPackageController::class, 'updatePlayRecordTimes'])->name('player_packages.play_records.update-times');
         Route::resource('player_packages.payments', PlayerPackagePaymentHistoryController::class);
 
         Route::resource('extras', ExtraController::class);

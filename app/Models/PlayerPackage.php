@@ -95,6 +95,8 @@ class PlayerPackage extends Model
                     'game_type' => $rec->gameType?->game_name ?? $package?->gameType?->game_name ?? '—',
                     'start_time' => $rec->start_time?->format('h:i A') ?? '—',
                     'end_time' => $rec->end_time?->format('h:i A') ?? '—',
+                    'start_time_input' => $rec->start_time?->format('Y-m-d\TH:i') ?? '',
+                    'end_time_input' => $rec->end_time?->format('Y-m-d\TH:i') ?? '',
                     'actual_time' => $actualMinutes,
                     'actual_time_formatted' => $actualMinutes !== null
                         ? ($actualMinutes >= 60 ? self::formatHoursMinutes($actualMinutes) : $actualMinutes . 'm')
