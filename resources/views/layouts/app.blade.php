@@ -627,8 +627,36 @@
         body.dark-mode #header-date-ad {
             color-scheme: dark;
         }
-        .ndp-container {
+        .ndp-container,
+        #ndp-nepali-box {
             z-index: 99988 !important;
+        }
+        body.dark-mode #ndp-nepali-box,
+        body.dark-mode .ndp-container {
+            background-color: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #f8fafc !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.dark-mode #ndp-nepali-box table,
+        body.dark-mode #ndp-nepali-box td,
+        body.dark-mode #ndp-nepali-box th {
+            background-color: transparent !important;
+            color: #f8fafc !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        body.dark-mode #ndp-nepali-box select {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        body.dark-mode #ndp-nepali-box .ndp-date:hover {
+            background-color: #334155 !important;
+        }
+        body.dark-mode #ndp-nepali-box .ndp-selected {
+            background-color: #38bdf8 !important;
+            color: #000000 !important;
+            font-weight: bold !important;
         }
         @media (max-width: 576px) {
             .top-main-header {
@@ -1030,77 +1058,149 @@
 
                 function formatConvertedDate(result) {
                     if (!result) return '';
-                    if (typeof result === 'string') return result;
-                    if (typeof result === 'object' && typeof NepaliFunctions !== 'undefined' && typeof NepaliFunctions.ConvertToDateFormat === 'function') {
-                        return NepaliFunctions.ConvertToDateFormat(result, 'YYYY-MM-DD');
+                    if (typeof result === 'string') {
+                        const trimmed = result.trim();
+                        if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(trimmed)) {
+                            const parts = trimmed.split(/[-/]/).map(p => p.padStart(2, '0'));
+                            return parts[0] + '-' + parts[1] + '-' + parts[2];
+                        }
+                        return trimmed;
+                    }
+                    if (typeof result === 'object') {
+                        if (typeof NepaliFunctions !== 'undefined' && typeof NepaliFunctions.ConvertToDateFormat === 'function') {
+                            try {
+                                const formatted = NepaliFunctions.ConvertToDateFormat(result, 'YYYY-MM-DD');
+                                if (formatted) return formatted;
+                            } catch (e) {}
+                        }
+                        const y = result.year || result.bsYear || result.adYear;
+                        const m = String(result.month || result.bsMonth || result.adMonth || '').padStart(2, '0');
+                        const d = String(result.day || result.date || result.bsDay || result.adDay || '').padStart(2, '0');
+                        if (y && m && d) {
+                            return `${y}-${m}-${d}`;
+                        }
                     }
                     return '';
                 }
 
+                function safeAd2Bs(adStr) {
+                    if (!adStr || !/^\d{4}-\d{2}-\d{2}$/.test(adStr)) return '';
+                    if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.AD2BS !== 'function') return '';
+                    try {
+                        let res = NepaliFunctions.AD2BS(adStr, 'YYYY-MM-DD', 'YYYY-MM-DD');
+                        let formatted = formatConvertedDate(res);
+                        if (formatted) return formatted;
+
+                        const parts = adStr.split('-').map(Number);
+                        res = NepaliFunctions.AD2BS({ year: parts[0], month: parts[1], day: parts[2] }, 'YYYY-MM-DD', 'YYYY-MM-DD');
+                        return formatConvertedDate(res);
+                    } catch (e) {
+                        console.warn('AD to BS conversion error:', e);
+                        return '';
+                    }
+                }
+
+                function safeBs2Ad(bsStr) {
+                    if (!bsStr || !/^\d{4}-\d{2}-\d{2}$/.test(bsStr)) return '';
+                    if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.BS2AD !== 'function') return '';
+                    try {
+                        let res = NepaliFunctions.BS2AD(bsStr, 'YYYY-MM-DD', 'YYYY-MM-DD');
+                        let formatted = formatConvertedDate(res);
+                        if (formatted) return formatted;
+
+                        const parts = bsStr.split('-').map(Number);
+                        res = NepaliFunctions.BS2AD({ year: parts[0], month: parts[1], day: parts[2] }, 'YYYY-MM-DD', 'YYYY-MM-DD');
+                        return formatConvertedDate(res);
+                    } catch (e) {
+                        console.warn('BS to AD conversion error:', e);
+                        return '';
+                    }
+                }
+
                 function getCurrentTodayBS() {
-                    if (typeof NepaliFunctions !== 'undefined' && NepaliFunctions.BS && typeof NepaliFunctions.ConvertToDateFormat === 'function') {
+                    if (typeof NepaliFunctions !== 'undefined') {
                         try {
-                            const bsDate = NepaliFunctions.BS.GetCurrentDate();
-                            return NepaliFunctions.ConvertToDateFormat(bsDate, 'YYYY-MM-DD');
+                            if (NepaliFunctions.BS && typeof NepaliFunctions.BS.GetCurrentDate === 'function') {
+                                const bsDate = NepaliFunctions.BS.GetCurrentDate();
+                                const formatted = formatConvertedDate(bsDate);
+                                if (formatted) return formatted;
+                            }
+                            if (typeof NepaliFunctions.GetCurrentBsDate === 'function') {
+                                const bsDate = NepaliFunctions.GetCurrentBsDate();
+                                const formatted = formatConvertedDate(bsDate);
+                                if (formatted) return formatted;
+                            }
                         } catch (e) {}
                     }
                     return '';
                 }
 
                 function syncBsFromAd(adVal) {
-                    if (isSyncingDates || !/^\d{4}-\d{2}-\d{2}$/.test(adVal)) return;
-                    if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.AD2BS !== 'function') return;
+                    if (isSyncingDates) return;
+                    const cleanAd = (adVal || '').trim();
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanAd)) return;
 
                     isSyncingDates = true;
                     try {
-                        const bsStr = formatConvertedDate(NepaliFunctions.AD2BS(adVal));
-                        if (bsStr) {
+                        const bsStr = safeAd2Bs(cleanAd);
+                        if (bsStr && bsInput.value !== bsStr) {
                             bsInput.value = bsStr;
                         }
-                    } catch (e) {
-                        console.error('AD to BS conversion failed:', e);
                     } finally {
                         isSyncingDates = false;
                     }
                 }
 
                 function syncAdFromBs(bsVal) {
-                    if (isSyncingDates || !/^\d{4}-\d{2}-\d{2}$/.test(bsVal)) return;
-                    if (typeof NepaliFunctions === 'undefined' || typeof NepaliFunctions.BS2AD !== 'function') return;
+                    if (isSyncingDates) return;
+                    const cleanBs = (bsVal || '').trim();
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanBs)) return;
 
                     isSyncingDates = true;
                     try {
-                        const adStr = formatConvertedDate(NepaliFunctions.BS2AD(bsVal));
-                        if (adStr) {
+                        const adStr = safeBs2Ad(cleanBs);
+                        if (adStr && adInput.value !== adStr) {
                             adInput.value = adStr;
                         }
-                    } catch (e) {
-                        console.error('BS to AD conversion failed:', e);
                     } finally {
                         isSyncingDates = false;
                     }
                 }
 
-                const initialBs = bsInput.value || getCurrentTodayBS();
-                if (!bsInput.classList.contains('nepali-datepicker-initialized')) {
+                function attachNepaliPicker() {
+                    if (bsInput.classList.contains('nepali-datepicker-initialized')) return;
+                    const initialBs = bsInput.value || getCurrentTodayBS() || safeAd2Bs(adInput.value);
                     const pickerOpts = {
                         language: 'english',
-                        value: initialBs,
-                        onChange: function(evt) {
-                            const selectedBs = (evt && evt.bs) ? evt.bs : bsInput.value;
+                        dateFormat: 'YYYY-MM-DD',
+                        ndpYear: true,
+                        ndpMonth: true,
+                        ndpYearCount: 20,
+                        onSelect: function(data) {
+                            const selectedBs = (data && (data.value || data.bs)) ? (data.value || data.bs) : bsInput.value;
                             syncAdFromBs((selectedBs || '').trim());
                         }
                     };
-                    if (typeof $.fn.nepaliDatePicker === 'function') {
-                        $(bsInput).nepaliDatePicker(pickerOpts);
-                        bsInput.classList.add('nepali-datepicker-initialized');
-                    } else if (typeof bsInput.NepaliDatePicker === 'function') {
-                        bsInput.NepaliDatePicker(pickerOpts);
-                        bsInput.classList.add('nepali-datepicker-initialized');
+
+                    try {
+                        if (typeof $.fn.nepaliDatePicker === 'function') {
+                            $(bsInput).nepaliDatePicker(pickerOpts);
+                            bsInput.classList.add('nepali-datepicker-initialized');
+                        } else if (typeof bsInput.NepaliDatePicker === 'function') {
+                            bsInput.NepaliDatePicker(pickerOpts);
+                            bsInput.classList.add('nepali-datepicker-initialized');
+                        }
+                        if (initialBs && !bsInput.value) {
+                            bsInput.value = initialBs;
+                        }
+                    } catch (e) {
+                        console.error('Failed to attach Nepali Date Picker to header input:', e);
                     }
-                    if (initialBs && !bsInput.value) {
-                        bsInput.value = initialBs;
-                    }
+                }
+
+                attachNepaliPicker();
+                if (!bsInput.classList.contains('nepali-datepicker-initialized')) {
+                    setTimeout(attachNepaliPicker, 300);
                 }
 
                 if (adInput.value && !bsInput.value) {
@@ -1116,7 +1216,13 @@
                     syncBsFromAd(this.value);
                 });
 
-                $(bsInput).on('change input dateSelect blur', function() {
+                ['input', 'change', 'blur', 'keyup', 'paste'].forEach(function(evt) {
+                    bsInput.addEventListener(evt, function() {
+                        syncAdFromBs((this.value || '').trim());
+                    });
+                });
+
+                $(bsInput).on('dateSelect nepaliDatePickerSelect ndp:select change input', function() {
                     syncAdFromBs((this.value || '').trim());
                 });
 
@@ -1128,7 +1234,13 @@
                         const dd = String(now.getDate()).padStart(2, '0');
                         const todayAdStr = `${yyyy}-${mm}-${dd}`;
                         adInput.value = todayAdStr;
-                        syncBsFromAd(todayAdStr);
+
+                        const todayBsStr = getCurrentTodayBS() || safeAd2Bs(todayAdStr);
+                        if (todayBsStr) {
+                            bsInput.value = todayBsStr;
+                        } else {
+                            syncBsFromAd(todayAdStr);
+                        }
                     });
                 }
             })();
